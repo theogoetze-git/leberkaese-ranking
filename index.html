@@ -161,6 +161,27 @@ select:focus,input:focus{border-color:var(--rot);}
 .res-card-desc{font-size:0.82rem;color:var(--text-weich);line-height:1.5;}
 .res-card-link{font-size:0.75rem;color:var(--rot);padding:0.8rem 1.2rem;border-top:1px solid var(--creme-dunkel);display:flex;align-items:center;gap:0.3rem;}
 
+/* SPENDIEREN */
+.spenden-hero{background:linear-gradient(135deg,#1A5C1A,#0D3B0D);color:#fff;border-radius:var(--radius);padding:2.5rem 2rem;text-align:center;margin-bottom:2rem;}
+.spenden-hero h2{font-size:1.8rem;font-weight:normal;margin-bottom:0.5rem;}
+.spenden-hero p{opacity:0.8;font-style:italic;font-size:0.95rem;max-width:420px;margin:0 auto;}
+.paypal-btn{display:inline-flex;align-items:center;gap:0.6rem;background:#FFD140;color:#1A1A1A;font-weight:bold;font-size:1.05rem;border:none;border-radius:30px;padding:0.9rem 2.2rem;cursor:pointer;text-decoration:none;font-family:inherit;margin-top:1.5rem;transition:background 0.2s,transform 0.15s;box-shadow:0 3px 12px rgba(0,0,0,0.2);}
+.paypal-btn:hover{background:#ffe066;transform:translateY(-2px);}
+.paypal-logo{font-size:1.3rem;}
+.spenden-hint{font-size:0.78rem;opacity:0.65;margin-top:0.8rem;}
+.spenden-section{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem;margin-bottom:2rem;}
+.spenden-card{background:var(--karte);border-radius:var(--radius);padding:1.5rem;box-shadow:0 2px 10px var(--schatten);}
+.spenden-card h3{font-size:1rem;color:var(--braun);margin-bottom:0.5rem;}
+.spenden-card p{font-size:0.85rem;color:var(--text-weich);line-height:1.6;}
+.spenden-card .icon{font-size:1.8rem;margin-bottom:0.5rem;}
+.kontakt-card{background:var(--karte);border-radius:var(--radius);padding:1.5rem;box-shadow:0 2px 10px var(--schatten);max-width:580px;}
+.kontakt-card h2{font-size:1.2rem;color:var(--braun);margin-bottom:0.3rem;}
+.kontakt-card .subtitle{font-size:0.82rem;color:var(--text-weich);margin-bottom:1.2rem;}
+.btn-kontakt-toggle{background:var(--rot);color:#fff;border:none;border-radius:10px;padding:0.7rem 1.5rem;font-size:0.95rem;cursor:pointer;font-family:inherit;width:100%;text-align:left;display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem;transition:background 0.2s;}
+.btn-kontakt-toggle:hover{background:var(--rot-hell);}
+.kontakt-form{display:none;}
+.kontakt-form.open{display:block;}
+
 /* HINZUFÜGEN */
 .form-card{background:var(--karte);border-radius:var(--radius);padding:1.5rem;box-shadow:0 2px 10px var(--schatten);max-width:580px;}
 .form-card h2{font-size:1.2rem;margin-bottom:1rem;color:var(--braun);}
@@ -212,6 +233,7 @@ select:focus,input:focus{border-color:var(--rot);}
     <button class="tab-btn" onclick="showTab('karte',this)">Karte</button>
     <button class="tab-btn" onclick="showTab('chart',this)">Preis-Leistung</button>
     <button class="tab-btn" onclick="showTab('ressourcen',this)">Ressourcen</button>
+    <button class="tab-btn" onclick="showTab('spendieren',this)">☕ Spendieren</button>
     <button class="tab-btn" onclick="showTab('hinzufuegen',this)" id="addTabBtn">+ Eintrag</button>
     <button class="admin-btn" id="adminBtn" onclick="toggleAdmin()" title="Admin-Modus">🔒</button>
   </nav>
@@ -418,12 +440,79 @@ select:focus,input:focus{border-color:var(--rot);}
     <a class="res-card" href="https://www.radatz.at/leberkaese-zahlen" target="_blank" rel="noopener">
       <div class="res-card-banner" style="background:#2A6B2A;"></div>
       <div class="res-card-body">
-        <div class="res-card-icon">📊</div>
-        <div class="res-card-title">Leberkäse in Zahlen</div>
-        <div class="res-card-desc">Wie viel Leberkäse isst Österreich wirklich? Radatz' nüchterne Statistik über ein leidenschaftliches Thema.</div>
+        <div class="res-card-icon">🎁</div>
+        <div class="res-card-title">Leberkäse Geburtstagsgeschenk</div>
+        <div class="res-card-desc">Weil Blumen vergehen, aber ein guter Ziegel unvergessen bleibt. Das ideale Geschenk für Menschen mit Geschmack.</div>
       </div>
-      <div class="res-card-link">Auf radatz.at lesen →</div>
+      <div class="res-card-link">Auf radatz.at entdecken →</div>
     </a>
+  </div>
+</div>
+
+<!-- SPENDIEREN -->
+<div id="tab-spendieren" class="tab-content">
+
+  <div class="spenden-hero">
+    <h2>🧱 Den Testern eine Runde spendieren</h2>
+    <p>Jede Spende finanziert einen weiteren hoaßen Ziegel auf dem unermüdlichen Weg zur perfekten Bewertung.</p>
+    <a class="paypal-btn"
+       href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=theo.goetze%40gmail.com&currency_code=EUR&item_name=Leberk%C3%A4se-Spende&no_note=1&no_shipping=1"
+       target="_blank" rel="noopener">
+      <span class="paypal-logo">𝙋</span> Jetzt via PayPal spenden
+    </a>
+    <div class="spenden-hint">Empfänger: theo.goetze@gmail.com · sicher über PayPal</div>
+  </div>
+
+  <div class="spenden-section">
+    <div class="spenden-card">
+      <div class="icon">🍞</div>
+      <h3>1 € – das Semmerl</h3>
+      <p>Das Brot zum Leberkäse ist die halbe Miete. Mit einem Euro sponserst du einen Semmel-Upgrade.</p>
+    </div>
+    <div class="spenden-card">
+      <div class="icon">🧱</div>
+      <h3>3–5 € – der Ziegel</h3>
+      <p>Ein vollständiger Leberkäse-Test. Direkt in die Erforschung der Wiener Fleischkultur investiert.</p>
+    </div>
+    <div class="spenden-card">
+      <div class="icon">👑</div>
+      <h3>10 €+ – der Mäzen</h3>
+      <p>Du finanzierst eine ganze Expedition inklusive Vergleichstest. Dein Name kann in den Annalen erscheinen.</p>
+    </div>
+  </div>
+
+  <div class="kontakt-card">
+    <h2>🏪 Fleischerei zum Testen melden</h2>
+    <p class="subtitle">Du kennst einen noch nicht getesteten Spot? Her damit.</p>
+
+    <button class="btn-kontakt-toggle" onclick="toggleKontaktForm(this)">
+      <span>📬</span> Ich möchte von den Leberkäse-Testern getestet werden
+    </button>
+
+    <div class="kontakt-form" id="kontaktForm">
+      <div class="form-group">
+        <label>Name der Fleischerei / des Lokals *</label>
+        <input type="text" id="k-name" placeholder="z.B. Fleischerei Huber">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Bezirk / Ort</label>
+          <input type="text" id="k-ort" placeholder="z.B. 1060 Wien">
+        </div>
+        <div class="form-group">
+          <label>Dein Name (optional)</label>
+          <input type="text" id="k-absender" placeholder="z.B. Hannes">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Warum sollen wir genau dort hin? 🧱</label>
+        <textarea id="k-text" placeholder="Was macht diesen Leberkäse besonders? Spezielle Sorte? Geheimtipp?"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="sendKontakt()">Nachricht senden</button>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-weich);margin-top:0.8rem;">Öffnet deine Mail-App mit den vorausgefüllten Daten.</p>
+    </div>
   </div>
 </div>
 
@@ -1119,6 +1208,31 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+// ─── SPENDIEREN / KONTAKT ─────────────────────────────
+function toggleKontaktForm(btn) {
+  const form = document.getElementById('kontaktForm');
+  const open = form.classList.toggle('open');
+  btn.querySelector('span:first-child').textContent = open ? '✕' : '📬';
+}
+
+function sendKontakt() {
+  const name = document.getElementById('k-name').value.trim();
+  if (!name) { showToast('Bitte Namen der Fleischerei angeben.'); return; }
+  const ort  = document.getElementById('k-ort').value.trim();
+  const von  = document.getElementById('k-absender').value.trim();
+  const text = document.getElementById('k-text').value.trim();
+  const subject = encodeURIComponent(`Leberkäse-Testwunsch: ${name}`);
+  const body = encodeURIComponent(
+    `Hallo,\n\nich schlage folgende Fleischerei für einen Test vor:\n\n`+
+    `📍 Name: ${name}\n`+
+    (ort?`📌 Ort: ${ort}\n`:'')+
+    (text?`\n💬 Warum: ${text}\n`:'')+
+    (von?`\n– ${von}`:'')+
+    `\n\n(gesendet über die Leberkäse-Ranking App)`
+  );
+  window.location.href = `mailto:theo.goetze@gmail.com?subject=${subject}&body=${body}`;
 }
 
 // ─── BUNDESLÄNDER ─────────────────────────────────────
