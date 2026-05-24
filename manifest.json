@@ -1,0 +1,12 @@
+{
+  "name": "Wiener Leberkäse-Ranking",
+  "short_name": "Leberkäse",
+  "description": "Das persönliche Wiener Leberkäse-Ranking",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F5EFE0",
+  "theme_color": "#8B1A1A",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

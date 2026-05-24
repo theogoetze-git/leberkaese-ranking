@@ -3,23 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wiener Leberkäse-Ranking 🧱</title>
+<title>Wiener Leberkäse-Ranking</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#8B1A1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Leberkäse">
+<link rel="apple-touch-icon" href="icon.svg">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-:root {
-  --rot: #8B1A1A;
-  --rot-hell: #B02020;
-  --gold: #C8961A;
-  --gold-hell: #E8B830;
-  --creme: #F5EFE0;
-  --creme-dunkel: #E8DFC8;
-  --braun: #4A3728;
-  --braun-hell: #7A5C48;
-  --text: #2C1810;
-  --text-weich: #6B4E3D;
-  --karte: #FFFDF6;
-  --schatten: rgba(44,24,16,0.12);
-  --radius: 14px;
+:root{
+  --rot:#8B1A1A; --rot-hell:#B02020; --gold:#C8961A; --gold-hell:#E8B830;
+  --creme:#F5EFE0; --creme-dunkel:#E8DFC8; --braun:#4A3728; --braun-hell:#7A5C48;
+  --text:#2C1810; --text-weich:#6B4E3D; --karte:#FFFDF6; --schatten:rgba(44,24,16,0.12);
+  --radius:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Georgia',serif;background:var(--creme);color:var(--text);min-height:100vh;}
@@ -31,10 +29,15 @@ header{background:var(--rot);color:#fff;padding:1.2rem 1.5rem 0;position:sticky;
 .header-top h1{font-size:1.5rem;font-weight:normal;letter-spacing:0.03em;line-height:1.2;}
 .header-top .emoji{font-size:2rem;}
 .subtitle{font-size:0.8rem;opacity:0.75;margin-top:0.1rem;}
-nav{display:flex;gap:0;}
-.tab-btn{background:none;border:none;color:rgba(255,255,255,0.7);padding:0.6rem 1.1rem;font-size:0.9rem;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;font-family:inherit;white-space:nowrap;}
+nav{display:flex;gap:0;align-items:stretch;overflow-x:auto;}
+.tab-btn{background:none;border:none;color:rgba(255,255,255,0.7);padding:0.6rem 1rem;font-size:0.88rem;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;font-family:inherit;white-space:nowrap;flex-shrink:0;}
 .tab-btn.active{color:#fff;border-bottom-color:var(--gold-hell);}
 .tab-btn:hover{color:#fff;}
+.admin-btn{margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.5);padding:0.6rem 0.8rem;cursor:pointer;font-size:1.1rem;transition:all 0.2s;border-bottom:3px solid transparent;flex-shrink:0;}
+.admin-btn.active{color:var(--gold-hell);border-bottom-color:var(--gold-hell);}
+.admin-btn:hover{color:#fff;}
+.admin-banner{background:var(--gold);color:var(--braun);font-size:0.75rem;text-align:center;padding:0.25rem;letter-spacing:0.05em;font-weight:bold;display:none;}
+.admin-banner.show{display:block;}
 
 /* MAIN */
 main{max-width:960px;margin:0 auto;padding:1.5rem 1rem;}
@@ -42,8 +45,8 @@ main{max-width:960px;margin:0 auto;padding:1.5rem 1rem;}
 .tab-content.active{display:block;}
 
 /* CONTROLS */
-.controls{display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:1.2rem;align-items:center;}
-.controls label{font-size:0.82rem;color:var(--text-weich);}
+.controls{display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:1.2rem;align-items:flex-end;}
+.controls label{font-size:0.82rem;color:var(--text-weich);display:block;margin-bottom:0.25rem;}
 select,input[type=text]{background:var(--karte);border:1.5px solid var(--creme-dunkel);border-radius:8px;padding:0.4rem 0.7rem;font-size:0.85rem;color:var(--text);font-family:inherit;outline:none;}
 select:focus,input:focus{border-color:var(--rot);}
 .pill-group{display:flex;flex-wrap:wrap;gap:0.4rem;}
@@ -52,9 +55,9 @@ select:focus,input:focus{border-color:var(--rot);}
 .toggle-label{display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;color:var(--text-weich);cursor:pointer;}
 .toggle-label input{accent-color:var(--rot);}
 
-/* CARDS GRID */
+/* CARDS */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem;}
-.card{background:var(--karte);border-radius:var(--radius);box-shadow:0 2px 10px var(--schatten);overflow:hidden;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;display:flex;flex-direction:column;}
+.card{background:var(--karte);border-radius:var(--radius);box-shadow:0 2px 10px var(--schatten);overflow:hidden;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;display:flex;flex-direction:column;position:relative;}
 .card:hover{transform:translateY(-3px);box-shadow:0 6px 20px var(--schatten);}
 .card-img{width:100%;height:180px;object-fit:cover;background:var(--creme-dunkel);}
 .card-img-placeholder{width:100%;height:180px;background:linear-gradient(135deg,var(--creme-dunkel),var(--creme));display:flex;align-items:center;justify-content:center;font-size:3rem;}
@@ -77,10 +80,14 @@ select:focus,input:focus{border-color:var(--rot);}
 .mini-bar-fill{height:100%;border-radius:3px;background:var(--rot);}
 .card-preis{font-size:0.8rem;color:var(--text-weich);}
 .card-preis strong{color:var(--text);}
-.no-rating{opacity:0.5;}
+.no-rating{opacity:0.55;}
 .badge-unbewertet{background:var(--creme-dunkel);color:var(--braun-hell);border-radius:8px;padding:0.2rem 0.6rem;font-size:0.72rem;display:inline-block;}
+.edit-overlay{position:absolute;top:0.5rem;right:0.5rem;display:none;}
+.edit-overlay.show{display:block;}
+.btn-edit-card{background:var(--gold);color:var(--braun);border:none;border-radius:8px;padding:0.3rem 0.7rem;font-size:0.75rem;cursor:pointer;font-family:inherit;font-weight:bold;box-shadow:0 1px 4px rgba(0,0,0,0.2);}
+.btn-edit-card:hover{background:var(--gold-hell);}
 
-/* MODAL */
+/* DETAIL MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;overflow-y:auto;}
 .modal-overlay.open{display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;}
 .modal{background:var(--karte);border-radius:var(--radius);max-width:580px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.3);overflow:hidden;}
@@ -102,43 +109,90 @@ select:focus,input:focus{border-color:var(--rot);}
 .modal-close{background:var(--rot);color:#fff;border:none;border-radius:8px;padding:0.5rem 1.2rem;font-size:0.9rem;cursor:pointer;font-family:inherit;}
 .modal-close:hover{background:var(--rot-hell);}
 
-/* KARTE */
-#map{height:480px;border-radius:var(--radius);box-shadow:0 2px 10px var(--schatten);}
-
-/* CHART */
-#chartCanvas{max-width:100%;background:var(--karte);border-radius:var(--radius);padding:1rem;box-shadow:0 2px 10px var(--schatten);}
-
-/* HINZUFÜGEN */
-.form-card{background:var(--karte);border-radius:var(--radius);padding:1.5rem;box-shadow:0 2px 10px var(--schatten);max-width:580px;}
-.form-card h2{font-size:1.2rem;margin-bottom:1rem;color:var(--braun);}
+/* EDIT MODAL */
+.edit-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1100;overflow-y:auto;}
+.edit-modal-overlay.open{display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;}
+.edit-modal{background:var(--karte);border-radius:var(--radius);max-width:600px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.35);overflow:hidden;}
+.edit-modal-header{background:var(--rot);color:#fff;padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;}
+.edit-modal-header h2{font-size:1.1rem;font-weight:normal;}
+.edit-modal-body{padding:1.5rem;display:flex;flex-direction:column;gap:0;}
 .form-group{margin-bottom:1rem;}
 .form-group label{display:block;font-size:0.82rem;color:var(--text-weich);margin-bottom:0.3rem;}
 .form-group input,.form-group textarea,.form-group select{width:100%;background:var(--creme);border:1.5px solid var(--creme-dunkel);border-radius:8px;padding:0.5rem 0.7rem;font-size:0.88rem;color:var(--text);font-family:inherit;outline:none;}
 .form-group textarea{height:80px;resize:vertical;}
-.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--rot);}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--rot);}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.photo-preview{width:100%;height:160px;object-fit:cover;border-radius:8px;margin-top:0.5rem;display:none;}
+.photo-preview.show{display:block;}
+.delete-btn{background:#c0392b;color:#fff;border:none;border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;cursor:pointer;font-family:inherit;}
+.delete-btn:hover{background:#a93226;}
 .btn-primary{background:var(--rot);color:#fff;border:none;border-radius:8px;padding:0.6rem 1.4rem;font-size:0.9rem;cursor:pointer;font-family:inherit;}
 .btn-primary:hover{background:var(--rot-hell);}
 .btn-secondary{background:var(--creme-dunkel);color:var(--braun);border:none;border-radius:8px;padding:0.6rem 1.2rem;font-size:0.9rem;cursor:pointer;font-family:inherit;}
-.import-section{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--creme-dunkel);}
-.import-section h3{font-size:1rem;margin-bottom:0.8rem;color:var(--braun);}
-.import-hint{font-size:0.78rem;color:var(--text-weich);margin-top:0.4rem;line-height:1.5;}
-.export-btn{margin-top:0.8rem;}
-.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--braun);color:#fff;padding:0.6rem 1.2rem;border-radius:20px;font-size:0.88rem;opacity:0;transition:opacity 0.3s;z-index:2000;pointer-events:none;}
-.toast.show{opacity:1;}
+.btn-secondary:hover{background:#d5c5a5;}
+.btn-row{display:flex;gap:0.8rem;flex-wrap:wrap;align-items:center;margin-top:0.5rem;}
+.btn-close-x{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.btn-close-x:hover{background:rgba(255,255,255,0.35);}
 
-/* LEGENDE */
+/* KARTE */
+#map{height:480px;border-radius:var(--radius);box-shadow:0 2px 10px var(--schatten);}
 .legende{font-size:0.75rem;color:var(--text-weich);margin-top:0.8rem;display:flex;gap:1rem;flex-wrap:wrap;}
 .legende span{display:flex;align-items:center;gap:0.3rem;}
 .legende-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
 
-/* SECTION DIVIDER */
-.section-title{font-size:0.72rem;color:var(--text-weich);text-transform:uppercase;letter-spacing:0.1em;margin:1.5rem 0 0.8rem;border-top:1px solid var(--creme-dunkel);padding-top:1rem;}
+/* CHART */
+#chartCanvas{max-width:100%;background:var(--karte);border-radius:var(--radius);padding:1rem;box-shadow:0 2px 10px var(--schatten);}
 
-@media(max-width:500px){
+/* RESSOURCEN */
+.ressourcen-hero{background:linear-gradient(135deg,var(--rot),#6B1010);color:#fff;border-radius:var(--radius);padding:2rem;margin-bottom:2rem;text-align:center;}
+.ressourcen-hero h2{font-size:1.8rem;font-weight:normal;margin-bottom:0.5rem;}
+.ressourcen-hero p{opacity:0.85;font-style:italic;font-size:1rem;}
+.synonyme-section{margin-bottom:2rem;}
+.synonyme-section h3{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-weich);margin-bottom:0.8rem;}
+.synonyme-pills{display:flex;flex-wrap:wrap;gap:0.5rem;}
+.syn-pill{background:var(--karte);border:1.5px solid var(--creme-dunkel);border-radius:20px;padding:0.35rem 1rem;font-size:0.85rem;color:var(--braun);font-style:italic;}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.2rem;}
+.res-card{background:var(--karte);border-radius:var(--radius);box-shadow:0 2px 10px var(--schatten);overflow:hidden;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;display:flex;flex-direction:column;}
+.res-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px var(--schatten);}
+.res-card-banner{height:6px;}
+.res-card-body{padding:1.2rem;flex:1;}
+.res-card-icon{font-size:2rem;margin-bottom:0.6rem;}
+.res-card-title{font-size:1rem;font-weight:bold;color:var(--text);margin-bottom:0.4rem;line-height:1.3;}
+.res-card-desc{font-size:0.82rem;color:var(--text-weich);line-height:1.5;}
+.res-card-link{font-size:0.75rem;color:var(--rot);padding:0.8rem 1.2rem;border-top:1px solid var(--creme-dunkel);display:flex;align-items:center;gap:0.3rem;}
+
+/* HINZUFÜGEN */
+.form-card{background:var(--karte);border-radius:var(--radius);padding:1.5rem;box-shadow:0 2px 10px var(--schatten);max-width:580px;}
+.form-card h2{font-size:1.2rem;margin-bottom:1rem;color:var(--braun);}
+.import-section{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--creme-dunkel);}
+.import-section h3{font-size:1rem;margin-bottom:0.8rem;color:var(--braun);}
+.import-hint{font-size:0.78rem;color:var(--text-weich);margin-top:0.4rem;line-height:1.5;}
+.locked-notice{background:var(--creme-dunkel);border-radius:var(--radius);padding:2rem;text-align:center;color:var(--text-weich);}
+.locked-notice .lock-icon{font-size:2.5rem;margin-bottom:0.8rem;}
+
+/* BUNDESLÄNDER */
+.bl-hero{background:linear-gradient(135deg,#1A4A8B,#0D2E5C);color:#fff;border-radius:var(--radius);padding:1.8rem;margin-bottom:1.5rem;text-align:center;}
+.bl-hero h2{font-size:1.5rem;font-weight:normal;margin-bottom:0.4rem;}
+.bl-hero p{opacity:0.8;font-size:0.88rem;font-style:italic;}
+.bl-badge{display:inline-block;background:#1A4A8B;color:#fff;border-radius:8px;padding:0.15rem 0.55rem;font-size:0.7rem;font-weight:bold;}
+.bl-form-card{background:var(--karte);border-radius:var(--radius);padding:1.5rem;box-shadow:0 2px 10px var(--schatten);margin-bottom:1.5rem;}
+.bl-form-card h3{font-size:1rem;color:var(--braun);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;}
+.bl-tabs{display:flex;gap:0.5rem;margin-bottom:1.2rem;}
+.bl-tab-pill{background:var(--creme-dunkel);border:none;border-radius:20px;padding:0.35rem 0.9rem;font-size:0.82rem;cursor:pointer;color:var(--text-weich);font-family:inherit;transition:all 0.2s;}
+.bl-tab-pill.active{background:#1A4A8B;color:#fff;}
+
+/* SECTION DIVIDER */
+.section-title{font-size:0.72rem;color:var(--text-weich);text-transform:uppercase;letter-spacing:0.1em;margin:1.5rem 0 0.8rem;border-top:1px solid var(--creme-dunkel);padding-top:1rem;grid-column:1/-1;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--braun);color:#fff;padding:0.6rem 1.2rem;border-radius:20px;font-size:0.88rem;opacity:0;transition:opacity 0.3s;z-index:2000;pointer-events:none;}
+.toast.show{opacity:1;}
+
+@media(max-width:520px){
   .form-row{grid-template-columns:1fr;}
   .header-top h1{font-size:1.2rem;}
   .tab-btn{padding:0.5rem 0.7rem;font-size:0.8rem;}
+  .ressourcen-hero h2{font-size:1.3rem;}
 }
 </style>
 </head>
@@ -153,12 +207,16 @@ select:focus,input:focus{border-color:var(--rot);}
     </div>
   </div>
   <nav>
-    <button class="tab-btn active" onclick="showTab('rangliste')">Rangliste</button>
-    <button class="tab-btn" onclick="showTab('karte')">Karte</button>
-    <button class="tab-btn" onclick="showTab('chart')">Preis-Leistung</button>
-    <button class="tab-btn" onclick="showTab('hinzufuegen')">+ Eintrag</button>
+    <button class="tab-btn active" onclick="showTab('rangliste',this)">Rangliste</button>
+    <button class="tab-btn" onclick="showTab('bundeslaender',this)">Bundesländer</button>
+    <button class="tab-btn" onclick="showTab('karte',this)">Karte</button>
+    <button class="tab-btn" onclick="showTab('chart',this)">Preis-Leistung</button>
+    <button class="tab-btn" onclick="showTab('ressourcen',this)">Ressourcen</button>
+    <button class="tab-btn" onclick="showTab('hinzufuegen',this)" id="addTabBtn">+ Eintrag</button>
+    <button class="admin-btn" id="adminBtn" onclick="toggleAdmin()" title="Admin-Modus">🔒</button>
   </nav>
 </header>
+<div class="admin-banner" id="adminBanner">⚡ Admin-Modus aktiv – Einträge bearbeiten möglich</div>
 
 <main>
 
@@ -166,7 +224,7 @@ select:focus,input:focus{border-color:var(--rot);}
 <div id="tab-rangliste" class="tab-content active">
   <div class="controls">
     <div>
-      <label>Sortieren nach</label><br>
+      <label>Sortieren nach</label>
       <select id="sortSelect" onchange="renderCards()">
         <option value="gesamt">Bewertung ↓</option>
         <option value="preis_asc">Preis ↑</option>
@@ -176,13 +234,13 @@ select:focus,input:focus{border-color:var(--rot);}
       </select>
     </div>
     <div>
-      <label>Bezirk</label><br>
+      <label>Bezirk</label>
       <select id="bezirkSelect" onchange="renderCards()">
         <option value="">Alle</option>
       </select>
     </div>
     <div>
-      <label>Suche</label><br>
+      <label>Suche</label>
       <input type="text" id="searchInput" placeholder="Name …" oninput="renderCards()">
     </div>
     <div class="toggle-label">
@@ -193,6 +251,102 @@ select:focus,input:focus{border-color:var(--rot);}
   <div class="pill-group" id="sortePills" style="margin-bottom:1rem;"></div>
   <div class="cards-grid" id="cardsGrid"></div>
   <div id="noResults" style="display:none;text-align:center;padding:2rem;color:var(--text-weich);">Keine Einträge gefunden.</div>
+</div>
+
+<!-- BUNDESLÄNDER -->
+<div id="tab-bundeslaender" class="tab-content">
+  <div class="bl-hero">
+    <h2>🇦🇹 Österreich jenseits des Rings</h2>
+    <p>Leberkäse kennt keine Landesgrenzen. Einträge aus allen Bundesländern willkommen.</p>
+  </div>
+
+  <div class="bl-tabs">
+    <button class="bl-tab-pill active" onclick="blShowTab('liste',this)">Rangliste</button>
+    <button class="bl-tab-pill" onclick="blShowTab('form',this)">+ Eintrag hinzufügen</button>
+  </div>
+
+  <!-- LISTE -->
+  <div id="bl-liste">
+    <div class="cards-grid" id="blCardsGrid"></div>
+    <div id="blNoResults" style="display:none;text-align:center;padding:2rem;color:var(--text-weich);">Noch keine Einträge aus den Bundesländern. Sei der Erste! 🏔️</div>
+  </div>
+
+  <!-- FORMULAR (für alle zugänglich) -->
+  <div id="bl-form" style="display:none;">
+    <div class="bl-form-card">
+      <h3>📍 Neuen Bundesland-Eintrag hinzufügen</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Bundesland *</label>
+          <select id="bl-bundesland">
+            <option value="">– bitte wählen –</option>
+            <option>Burgenland</option>
+            <option>Kärnten</option>
+            <option>Niederösterreich</option>
+            <option>Oberösterreich</option>
+            <option>Salzburg</option>
+            <option>Steiermark</option>
+            <option>Tirol</option>
+            <option>Vorarlberg</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ort</label>
+          <input type="text" id="bl-ort" placeholder="z.B. Graz">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Name der Fleischerei / des Lokals *</label>
+        <input type="text" id="bl-name" placeholder="z.B. Fleischerei Huber">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sorte(n)</label>
+          <input type="text" id="bl-sorte" placeholder="Pikant; Normal">
+        </div>
+        <div class="form-group">
+          <label>Preis (€)</label>
+          <input type="number" id="bl-preis" step="0.10" min="0" placeholder="3.50">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Kruste (0–10)</label>
+          <input type="number" id="bl-kruste" step="0.1" min="0" max="10">
+        </div>
+        <div class="form-group">
+          <label>Brot (0–10)</label>
+          <input type="number" id="bl-brot" step="0.1" min="0" max="10">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Fleisch (0–10)</label>
+          <input type="number" id="bl-fleisch" step="0.1" min="0" max="10">
+        </div>
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" id="bl-datum">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Anmerkung / Kommentar</label>
+        <textarea id="bl-anmerkung" placeholder="Wie war's? Besonderheiten?"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Foto</label>
+        <input type="file" id="bl-foto" accept="image/*" onchange="previewPhoto(this,'bl-foto-preview')">
+        <img id="bl-foto-preview" class="photo-preview" alt="Vorschau">
+      </div>
+      <div class="form-group">
+        <label>Dein Name (optional)</label>
+        <input type="text" id="bl-autor" placeholder="z.B. Maria">
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="addBLEntry()">Eintrag speichern</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- KARTE -->
@@ -210,70 +364,148 @@ select:focus,input:focus{border-color:var(--rot);}
   <canvas id="chartCanvas"></canvas>
 </div>
 
-<!-- HINZUFÜGEN -->
-<div id="tab-hinzufuegen" class="tab-content">
-  <div class="form-card">
-    <h2>Neuen Eintrag hinzufügen</h2>
-    <div class="form-group">
-      <label>Name der Fleischerei / des Lokals *</label>
-      <input type="text" id="f-name" placeholder="z.B. Fleischerei Mustermann">
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Bezirk</label>
-        <input type="text" id="f-bezirk" placeholder="z.B. 1060">
-      </div>
-      <div class="form-group">
-        <label>Preis (€)</label>
-        <input type="number" id="f-preis" step="0.10" min="0" placeholder="3.50">
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Sorte(n)</label>
-      <input type="text" id="f-sorte" placeholder="Pikant; Käse; Chili-Cheese">
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Kruste (0–10)</label>
-        <input type="number" id="f-kruste" step="0.1" min="0" max="10">
-      </div>
-      <div class="form-group">
-        <label>Brot (0–10)</label>
-        <input type="number" id="f-brot" step="0.1" min="0" max="10">
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Fleisch (0–10)</label>
-        <input type="number" id="f-fleisch" step="0.1" min="0" max="10">
-      </div>
-      <div class="form-group">
-        <label>Datum</label>
-        <input type="date" id="f-datum">
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Anmerkung</label>
-      <textarea id="f-anmerkung" placeholder="Freitext …"></textarea>
-    </div>
-    <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
-      <button class="btn-primary" onclick="addEntry()">Eintrag speichern</button>
-      <button class="btn-secondary" onclick="exportCSV()">Als CSV exportieren</button>
-    </div>
+<!-- RESSOURCEN -->
+<div id="tab-ressourcen" class="tab-content">
+  <div class="ressourcen-hero">
+    <h2>Das Wissen um den Ziegel</h2>
+    <p>„Der Leberkäse ist nicht einfach Fleisch. Er ist Haltung."</p>
+  </div>
 
-    <div class="import-section">
-      <h3>Aus CSV importieren</h3>
-      <input type="file" id="csvImport" accept=".csv" onchange="importCSV(this)">
-      <p class="import-hint">Format: <code>name,bezirk,sorte,preis_eur,bewertung_gesamt,kruste,brot,fleisch,anmerkung,datum,foto_dateiname</code><br>
-      Bestehende Einträge bleiben erhalten; Duplikate (gleicher Name) werden übersprungen.</p>
+  <div class="synonyme-section">
+    <h3>Das Tier hat viele Namen</h3>
+    <div class="synonyme-pills">
+      <span class="syn-pill">Leabagiovanni</span>
+      <span class="syn-pill">Leabatschole</span>
+      <span class="syn-pill">LK</span>
+      <span class="syn-pill">Leabaronka</span>
+      <span class="syn-pill">hoaßa Ziegel</span>
+      <span class="syn-pill">Leistungskäse</span>
+      <span class="syn-pill">Leabatschutti</span>
+    </div>
+  </div>
+
+  <div class="res-grid">
+    <a class="res-card" href="https://maps.app.goo.gl/9SmQ9guxNjVLbuPK9" target="_blank" rel="noopener">
+      <div class="res-card-banner" style="background:var(--rot);"></div>
+      <div class="res-card-body">
+        <div class="res-card-icon">🗺️</div>
+        <div class="res-card-title">Unsere Erkundungs-Karte</div>
+        <div class="res-card-desc">Alle besuchten und geplanten Locations in Wien – live auf Google Maps. Der offizielle Scouting-Radar.</div>
+      </div>
+      <div class="res-card-link">Auf Google Maps öffnen →</div>
+    </a>
+
+    <a class="res-card" href="https://on.orf.at/video/14273700/dok-1-der-leberkaes-weltberuehmt-in-oesterreich" target="_blank" rel="noopener">
+      <div class="res-card-banner" style="background:#1a1a8b;"></div>
+      <div class="res-card-body">
+        <div class="res-card-icon">🎬</div>
+        <div class="res-card-title">Der Ziegel auf ORF</div>
+        <div class="res-card-desc">Dok 1: „Der Leberkäse – weltberühmt in Österreich." Die Pflichtlektüre für jeden, der es ernst meint.</div>
+      </div>
+      <div class="res-card-link">Auf orf.at ansehen →</div>
+    </a>
+
+    <a class="res-card" href="https://www.bmluk.gv.at/themen/lebensmittel/trad-lebensmittel/Fleisch/Fleischprodukte/leberkaese.html" target="_blank" rel="noopener">
+      <div class="res-card-banner" style="background:var(--gold);"></div>
+      <div class="res-card-body">
+        <div class="res-card-icon">📜</div>
+        <div class="res-card-title">Das amtliche Traditionsrezept</div>
+        <div class="res-card-desc">Das Bundesministerium klärt auf: Was darf sich eigentlich „Leberkäse" nennen? Die offizielle österreichische Definition.</div>
+      </div>
+      <div class="res-card-link">Auf bmluk.gv.at lesen →</div>
+    </a>
+
+    <a class="res-card" href="https://www.radatz.at/leberkaese-zahlen" target="_blank" rel="noopener">
+      <div class="res-card-banner" style="background:#2A6B2A;"></div>
+      <div class="res-card-body">
+        <div class="res-card-icon">📊</div>
+        <div class="res-card-title">Leberkäse in Zahlen</div>
+        <div class="res-card-desc">Wie viel Leberkäse isst Österreich wirklich? Radatz' nüchterne Statistik über ein leidenschaftliches Thema.</div>
+      </div>
+      <div class="res-card-link">Auf radatz.at lesen →</div>
+    </a>
+  </div>
+</div>
+
+<!-- HINZUFÜGEN / ADMIN -->
+<div id="tab-hinzufuegen" class="tab-content">
+  <div id="addFormWrap">
+    <div class="locked-notice" id="lockedNotice">
+      <div class="lock-icon">🔒</div>
+      <p style="font-size:0.95rem;margin-bottom:0.8rem;">Dieser Bereich ist geschützt.</p>
+      <button class="btn-primary" onclick="toggleAdmin()">Admin-Modus aktivieren</button>
+    </div>
+    <div id="addFormContent" style="display:none;">
+      <div class="form-card">
+        <h2>Neuen Eintrag hinzufügen</h2>
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" id="f-name" placeholder="z.B. Fleischerei Mustermann">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Bezirk</label>
+            <input type="text" id="f-bezirk" placeholder="z.B. 1060">
+          </div>
+          <div class="form-group">
+            <label>Preis (€)</label>
+            <input type="number" id="f-preis" step="0.10" min="0" placeholder="3.50">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Sorte(n)</label>
+          <input type="text" id="f-sorte" placeholder="Pikant; Käse; Chili-Cheese">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Kruste (0–10)</label>
+            <input type="number" id="f-kruste" step="0.1" min="0" max="10">
+          </div>
+          <div class="form-group">
+            <label>Brot (0–10)</label>
+            <input type="number" id="f-brot" step="0.1" min="0" max="10">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fleisch (0–10)</label>
+            <input type="number" id="f-fleisch" step="0.1" min="0" max="10">
+          </div>
+          <div class="form-group">
+            <label>Datum</label>
+            <input type="date" id="f-datum">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Anmerkung</label>
+          <textarea id="f-anmerkung" placeholder="Freitext …"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Foto hochladen</label>
+          <input type="file" id="f-foto" accept="image/*" onchange="previewPhoto(this,'f-foto-preview')">
+          <img id="f-foto-preview" class="photo-preview" alt="Vorschau">
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="addEntry()">Eintrag speichern</button>
+          <button class="btn-secondary" onclick="exportCSV()">Als CSV exportieren</button>
+        </div>
+      </div>
+
+      <div class="form-card" style="margin-top:1.5rem;">
+        <div class="import-section" style="margin-top:0;padding-top:0;border-top:none;">
+          <h3>Aus CSV importieren</h3>
+          <input type="file" id="csvImport" accept=".csv" onchange="importCSV(this)">
+          <p class="import-hint">Format: <code>name,bezirk,sorte,preis_eur,bewertung_gesamt,kruste,brot,fleisch,anmerkung,datum,foto_dateiname</code></p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 </main>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeDetailModal(event)">
   <div class="modal" id="modal">
     <div id="modalImgWrap"></div>
     <div class="modal-body">
@@ -281,7 +513,7 @@ select:focus,input:focus{border-color:var(--rot);}
       <div class="modal-meta" id="modalMeta"></div>
       <div class="modal-score">
         <span class="big" id="modalScore"></span>
-        <span class="max">/ 10</span>
+        <span class="max" id="modalScoreMax"></span>
       </div>
       <div class="rating-bars" id="modalBars"></div>
       <div class="modal-anmerkung" id="modalAnmerkung" style="display:none;"></div>
@@ -291,14 +523,80 @@ select:focus,input:focus{border-color:var(--rot);}
   </div>
 </div>
 
+<!-- EDIT MODAL -->
+<div class="edit-modal-overlay" id="editModalOverlay">
+  <div class="edit-modal">
+    <div class="edit-modal-header">
+      <h2 id="editModalTitle">Eintrag bearbeiten</h2>
+      <button class="btn-close-x" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <input type="hidden" id="e-id">
+      <div class="form-group">
+        <label>Name *</label>
+        <input type="text" id="e-name">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Bezirk</label>
+          <input type="text" id="e-bezirk" placeholder="z.B. 1060">
+        </div>
+        <div class="form-group">
+          <label>Preis (€)</label>
+          <input type="number" id="e-preis" step="0.10" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Sorte(n) (mit ; trennen)</label>
+        <input type="text" id="e-sorte">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Kruste (0–10)</label>
+          <input type="number" id="e-kruste" step="0.1" min="0" max="10">
+        </div>
+        <div class="form-group">
+          <label>Brot (0–10)</label>
+          <input type="number" id="e-brot" step="0.1" min="0" max="10">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Fleisch (0–10)</label>
+          <input type="number" id="e-fleisch" step="0.1" min="0" max="10">
+        </div>
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" id="e-datum">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Anmerkung</label>
+        <textarea id="e-anmerkung"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Foto ersetzen</label>
+        <input type="file" id="e-foto" accept="image/*" onchange="previewPhoto(this,'e-foto-preview')">
+        <img id="e-foto-preview" class="photo-preview" alt="Vorschau">
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveEdit()">Speichern</button>
+        <button class="btn-secondary" onclick="closeEditModal()">Abbrechen</button>
+        <button class="delete-btn" onclick="deleteEntry()">Löschen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// ═══════════════════════════════════════════
-// DATENSATZ
-// ═══════════════════════════════════════════
+// ─── ADMIN PIN (hier ändern) ───────────────────────────
+const ADMIN_PIN = 'lk1234';
+// ──────────────────────────────────────────────────────
+
 const INITIAL_DATA = [
   {id:1,name:"Fleischerei Ringl",bezirk:"1060",sorte:["Scharf","Käse","Kräuter","Oliven","Curry"],preis:2.74,gesamt:7.93,kruste:7.3,brot:7.5,fleisch:9.0,anmerkung:"Salzig, Heiß, vollmundig",datum:"2025-05-07",foto:"ringl.jpg",lat:48.196,lng:16.353},
   {id:2,name:"Alles Wurscht",bezirk:"1010",sorte:["Wildschwein","Käse"],preis:5.50,gesamt:7.66,kruste:8.0,brot:6.0,fleisch:9.0,anmerkung:"Ohne Käse war er besser",datum:"2025-03-06",foto:"alles_wurscht.jpg",lat:48.208,lng:16.374},
@@ -307,13 +605,13 @@ const INITIAL_DATA = [
   {id:5,name:"Pferdefleischerei Gumprecht",bezirk:"1220",sorte:["Pikant","Pferd"],preis:4.00,gesamt:7.80,kruste:9.0,brot:6.0,fleisch:8.4,anmerkung:"Luftig",datum:"2025-03-18",foto:"gumprecht.jpg",lat:48.227,lng:16.448},
   {id:6,name:"Radatz",bezirk:"1020",sorte:["Pikant","Halloween"],preis:3.75,gesamt:7.60,kruste:6.5,brot:8.8,fleisch:7.5,anmerkung:"Gute Pfefferoni-Note – leider mit Käse; Halloween coole Farbe",datum:"2025-10-21",foto:"radatz.jpg",lat:48.216,lng:16.389},
   {id:7,name:"Praterwirt",bezirk:"1020",sorte:["Salz-Ox","Pikant"],preis:5.00,gesamt:6.60,kruste:5.6,brot:7.0,fleisch:7.2,anmerkung:"Mit Kren & Senf",datum:"2025-03-13",foto:"praterwirt.jpg",lat:48.2175,lng:16.3975},
-  {id:8,name:"Klaghofer",bezirk:"",sorte:["Pikant"],preis:2.97,gesamt:8.50,kruste:7.0,brot:9.5,fleisch:9.0,anmerkung:"Sehr gut",datum:"2026-03-02",foto:"",lat:null,lng:null},
+  {id:8,name:"Klaghofer",bezirk:"",sorte:["Pikant"],preis:2.97,gesamt:8.50,kruste:7.0,brot:9.5,fleisch:9.0,anmerkung:"Sehr gut",datum:"2026-03-02",foto:"klaghofer.jpg",lat:null,lng:null},
   {id:9,name:"Crazy Butcher",bezirk:"1030",sorte:["Chili-Cheese"],preis:4.00,gesamt:8.03,kruste:7.0,brot:7.9,fleisch:9.2,anmerkung:"Perfekte Temperatur, normaler Chili Leberkäse wäre perfekt",datum:"2025-10-17",foto:"crazy_butcher.jpg",lat:48.199,lng:16.399},
   {id:10,name:"Fleischerei Kröppel",bezirk:"1010",sorte:["Pikant","Käse"],preis:3.50,gesamt:7.60,kruste:7.0,brot:8.6,fleisch:7.2,anmerkung:"Solide, klassischer Leberkäse (Vorarlbergsicht), für Wien überdurchschnittlich",datum:"2025-10-08",foto:"kroppel.jpg",lat:48.209,lng:16.375},
   {id:11,name:"Palatin die Biofleischerei",bezirk:"1030",sorte:["Angusrind Chili"],preis:3.60,gesamt:8.56,kruste:8.5,brot:8.2,fleisch:9.0,anmerkung:"Hoher Speckanteil, gute Würze, rötlich. Am Rochusmarkt.",datum:"2025-10-17",foto:"palatin.jpg",lat:48.1993,lng:16.3905},
   {id:12,name:"Fa. Schneider",bezirk:"1020",sorte:["Normal","Käse"],preis:3.60,gesamt:6.96,kruste:7.0,brot:6.8,fleisch:7.1,anmerkung:"So sollte der Billa-Leberkäse schmecken! Am Karmelitermarkt.",datum:"2025-10-21",foto:"schneider.jpg",lat:48.2195,lng:16.3858},
   {id:13,name:"Klaus Koglbauer (Gumprecht)",bezirk:"1020",sorte:["Pferde Pfefferoni"],preis:3.80,gesamt:7.90,kruste:8.6,brot:6.9,fleisch:8.2,anmerkung:"Perfekte Hitze",datum:"2025-10-21",foto:"koglbauer.jpg",lat:48.2185,lng:16.3862},
-  {id:14,name:"Ausgabe 1090",bezirk:"1090",sorte:["Wildschwein","Pistazien"],preis:7.80,gesamt:7.36,kruste:6.8,brot:7.2,fleisch:8.1,anmerkung:"Guter Geruch, fehlende Pistazien, fehlender Bärlauch, angeröstetes Brot. Wildschweinleberkäse im Pistaziensemmel.",datum:"2025-10-29",foto:"ausgabe.jpg",lat:48.224,lng:16.357},
+  {id:14,name:"Ausgabe 1090",bezirk:"1090",sorte:["Wildschwein","Pistazien"],preis:7.80,gesamt:7.36,kruste:6.8,brot:7.2,fleisch:8.1,anmerkung:"Guter Geruch, fehlende Pistazien, fehlender Bärlauch, angeröstetes Brot.",datum:"2025-10-29",foto:"ausgabe.jpg",lat:48.224,lng:16.357},
   {id:15,name:"Fleischerei Stierschneider",bezirk:"1150",sorte:["Pikant"],preis:3.90,gesamt:7.73,kruste:7.0,brot:6.9,fleisch:9.3,anmerkung:"Scheibe etwas zu dünn – insbesondere für dieses Brot",datum:"2025-02-03",foto:"stierschneider.jpg",lat:48.199,lng:16.328},
   {id:16,name:"Fleischerei Gissinger",bezirk:"",sorte:["Käse","Chili-Cheese"],preis:5.50,gesamt:6.40,kruste:4.0,brot:8.2,fleisch:7.0,anmerkung:"Fleisch leider raumtemperiert, Qualität sehr hoch",datum:"2025-05-13",foto:"",lat:null,lng:null},
   {id:17,name:"Leitenbauer Delikatessen",bezirk:"1070",sorte:["Kalbsleberkäse","Ochse mit Käse","Wildschwein"],preis:4.00,gesamt:8.56,kruste:7.1,brot:9.6,fleisch:9.0,anmerkung:"Temperatur & Größe ausbaufähig",datum:"2025-11-04",foto:"leitenbauer.jpg",lat:48.202,lng:16.356},
@@ -321,8 +619,7 @@ const INITIAL_DATA = [
   {id:19,name:"Genussboutique Waldgut",bezirk:"1190",sorte:["Chili-Cheese"],preis:5.00,gesamt:8.23,kruste:8.5,brot:8.0,fleisch:8.2,anmerkung:"Schöne Boutique. Auch in der Markthalle (1060).",datum:"2025-12-05",foto:"waldgut_1190.jpg",lat:48.247,lng:16.368},
   {id:20,name:"Sonnberg Biofleisch",bezirk:"1190",sorte:["Käse","Normal"],preis:3.84,gesamt:7.80,kruste:7.0,brot:8.0,fleisch:8.4,anmerkung:"Nur Käse & Normal",datum:"2025-12-05",foto:"sonnberg.jpg",lat:48.2475,lng:16.3692},
   {id:21,name:"Blün (Markthalle)",bezirk:"1060",sorte:["Wels","Pikant"],preis:4.50,gesamt:7.23,kruste:7.5,brot:6.2,fleisch:8.0,anmerkung:"Könnte dicker & heißer sein. Fischleberkäse.",datum:"2026-01-15",foto:"blun.jpg",lat:48.196,lng:16.356},
-  {id:22,name:"MyKas by XXXLutz",bezirk:"",sorte:["Der Heurige","Der Bayer","Der Mexikaner","Der Bauer"],preis:2.50,gesamt:4.00,kruste:1.0,brot:7.0,fleisch:4.0,anmerkung:"Bonus-Punkte fürs Topping!",datum:"2026-02-13",foto:"",lat:null,lng:null},
-  // Noch zu testen
+  {id:22,name:"MyKas by XXXLutz",bezirk:"",sorte:["Der Heurige","Der Bayer","Der Mexikaner","Der Bauer"],preis:2.50,gesamt:4.00,kruste:1.0,brot:7.0,fleisch:4.0,anmerkung:"Bonus-Punkte fürs Topping!",datum:"2026-02-13",foto:"mykas.jpg",lat:null,lng:null},
   {id:101,name:"Landbison",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:102,name:"Fleischerei Hödl",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:103,name:"Gugumuck",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"Schneckenleberkäse – legendär",datum:"",foto:"",lat:null,lng:null},
@@ -335,31 +632,87 @@ const INITIAL_DATA = [
   {id:110,name:"Bar Barbara",bezirk:"1090",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.226,lng:16.358},
 ];
 
-// ═══════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════
+// ─── STATE ────────────────────────────────────────────
 let entries = JSON.parse(localStorage.getItem('lk_entries') || 'null') || INITIAL_DATA;
 let activeFilter = '';
 let mapInstance = null;
 let chartInstance = null;
+let adminMode = sessionStorage.getItem('lk_admin') === '1';
+let currentEditId = null;
 
 function save() { localStorage.setItem('lk_entries', JSON.stringify(entries)); }
 
-// ═══════════════════════════════════════════
-// TABS
-// ═══════════════════════════════════════════
-function showTab(name) {
+// ─── PHOTOS ──────────────────────────────────────────
+function getPhotoSrc(e) {
+  const b64 = localStorage.getItem('lk_photo_' + e.id);
+  if (b64) return b64;
+  if (e.foto) return 'fotos/' + e.foto;
+  return null;
+}
+function savePhotoB64(id, b64) { localStorage.setItem('lk_photo_' + id, b64); }
+function deletePhotoB64(id) { localStorage.removeItem('lk_photo_' + id); }
+
+function previewPhoto(input, previewId) {
+  const preview = document.getElementById(previewId);
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { preview.src = e.target.result; preview.classList.add('show'); };
+  reader.readAsDataURL(file);
+}
+
+function readFileAsB64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ─── ADMIN ────────────────────────────────────────────
+function toggleAdmin() {
+  if (adminMode) {
+    adminMode = false;
+    sessionStorage.removeItem('lk_admin');
+  } else {
+    const pin = prompt('Admin-PIN:');
+    if (pin === null) return;
+    if (pin === ADMIN_PIN) {
+      adminMode = true;
+      sessionStorage.setItem('lk_admin', '1');
+      showToast('✓ Admin-Modus aktiviert');
+    } else {
+      showToast('Falscher PIN.'); return;
+    }
+  }
+  updateAdminUI();
+  renderCards();
+}
+
+function updateAdminUI() {
+  const btn = document.getElementById('adminBtn');
+  const banner = document.getElementById('adminBanner');
+  const addForm = document.getElementById('addFormContent');
+  const lockedNotice = document.getElementById('lockedNotice');
+  btn.textContent = adminMode ? '🔓' : '🔒';
+  btn.classList.toggle('active', adminMode);
+  banner.classList.toggle('show', adminMode);
+  if (addForm) { addForm.style.display = adminMode ? 'block' : 'none'; }
+  if (lockedNotice) { lockedNotice.style.display = adminMode ? 'none' : 'block'; }
+}
+
+// ─── TABS ─────────────────────────────────────────────
+function showTab(name, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  event.target.classList.add('active');
-  if (name === 'karte') initMap();
-  if (name === 'chart') initChart();
+  if (btn) btn.classList.add('active');
+  if (name === 'karte') setTimeout(initMap, 50);
+  if (name === 'chart') setTimeout(initChart, 50);
 }
 
-// ═══════════════════════════════════════════
-// RENDER CARDS
-// ═══════════════════════════════════════════
+// ─── RENDER CARDS ─────────────────────────────────────
 function renderCards() {
   const sort = document.getElementById('sortSelect').value;
   const bezirk = document.getElementById('bezirkSelect').value;
@@ -369,12 +722,10 @@ function renderCards() {
   let rated = entries.filter(e => e.gesamt !== null);
   let unrated = entries.filter(e => e.gesamt === null);
 
-  if (bezirk) rated = rated.filter(e => e.bezirk === bezirk);
-  if (bezirk) unrated = unrated.filter(e => e.bezirk === bezirk);
+  if (bezirk) { rated = rated.filter(e => e.bezirk === bezirk); unrated = unrated.filter(e => e.bezirk === bezirk); }
   if (search) { rated = rated.filter(e => e.name.toLowerCase().includes(search)); unrated = unrated.filter(e => e.name.toLowerCase().includes(search)); }
-  if (activeFilter) { rated = rated.filter(e => e.sorte.some(s => s.toLowerCase().includes(activeFilter.toLowerCase()))); }
+  if (activeFilter) rated = rated.filter(e => e.sorte.some(s => s.toLowerCase().includes(activeFilter.toLowerCase())));
 
-  // sort
   const sortFns = {
     gesamt: (a,b) => b.gesamt - a.gesamt,
     preis_asc: (a,b) => (a.preis||99) - (b.preis||99),
@@ -384,80 +735,63 @@ function renderCards() {
   };
   rated.sort(sortFns[sort] || sortFns.gesamt);
 
-  const grid = document.getElementById('cardsGrid');
-  grid.innerHTML = '';
-
-  // build rank within full sorted rated list for medal badges
-  const fullSorted = entries.filter(e=>e.gesamt!==null).sort((a,b)=>b.gesamt-a.gesamt);
+  const fullSorted = entries.filter(e => e.gesamt !== null).sort((a,b) => b.gesamt - a.gesamt);
   const rankMap = {};
   fullSorted.forEach((e,i) => rankMap[e.id] = i+1);
 
+  const grid = document.getElementById('cardsGrid');
+  grid.innerHTML = '';
   rated.forEach(e => grid.appendChild(makeCard(e, rankMap[e.id])));
 
-  if (!nurBewertet) {
-    if (unrated.length > 0) {
-      const div = document.createElement('div');
-      div.className = 'section-title';
-      div.style.gridColumn = '1/-1';
-      div.textContent = 'Noch zu testen (' + unrated.length + ')';
-      grid.appendChild(div);
-      unrated.sort((a,b)=>a.name.localeCompare(b.name));
-      unrated.forEach(e => grid.appendChild(makeCardUnrated(e)));
-    }
+  if (!nurBewertet && unrated.length > 0) {
+    const div = document.createElement('div');
+    div.className = 'section-title';
+    div.textContent = 'Noch zu testen (' + unrated.length + ')';
+    grid.appendChild(div);
+    unrated.sort((a,b) => a.name.localeCompare(b.name));
+    unrated.forEach(e => grid.appendChild(makeCardUnrated(e)));
   }
 
-  document.getElementById('noResults').style.display = (rated.length === 0 && (nurBewertet || unrated.length === 0)) ? 'block' : 'none';
-}
-
-function starsFor(n) {
-  if (n === null) return '';
-  const full = Math.floor(n/2);
-  const half = (n/2 - full) >= 0.5 ? 1 : 0;
-  return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5-full-half);
+  document.getElementById('noResults').style.display =
+    (rated.length === 0 && (nurBewertet || unrated.length === 0)) ? 'block' : 'none';
 }
 
 function makeCard(e, rank) {
   const div = document.createElement('div');
   div.className = 'card';
-  div.onclick = () => openModal(e);
 
-  let imgHtml = e.foto
-    ? `<img class="card-img" src="fotos/${e.foto}" alt="${e.name}" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
+  const photoSrc = getPhotoSrc(e);
+  const imgHtml = photoSrc
+    ? `<img class="card-img" src="${photoSrc}" alt="${e.name}" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
     : '';
-  let placeholder = `<div class="card-img-placeholder" ${e.foto?'style="display:none"':''}>🧱</div>`;
-
-  let rankClass = rank===1?'gold':rank===2?'silver':rank===3?'bronze':'';
-  let badgeHtml = `<span class="rank-badge ${rankClass}">${rank}</span>`;
-
-  let barsHtml = '';
-  if (e.kruste!==null) {
-    barsHtml = `<div class="mini-bars">
-      ${miniBar('Kruste', e.kruste)}
-      ${miniBar('Brot', e.brot)}
-      ${miniBar('Fleisch', e.fleisch)}
-    </div>`;
-  }
-
-  let sorteHtml = e.sorte.length ? `<div class="card-sorte">${e.sorte.map(s=>`<span class="sorte-tag">${s}</span>`).join('')}</div>` : '';
-  let preisHtml = e.preis ? `<div class="card-preis">Preis: <strong>${e.preis.toFixed(2)} €</strong></div>` : '';
-  let datumHtml = e.datum ? `<div class="card-meta">${formatDatum(e.datum)}${e.bezirk?' · '+e.bezirk:''}</div>` : (e.bezirk?`<div class="card-meta">${e.bezirk}</div>`:'');
+  const placeholder = `<div class="card-img-placeholder" ${photoSrc?'style="display:none"':''}>🧱</div>`;
+  const rankClass = rank===1?'gold':rank===2?'silver':rank===3?'bronze':'';
+  const sorteHtml = e.sorte.length ? `<div class="card-sorte">${e.sorte.map(s=>`<span class="sorte-tag">${s}</span>`).join('')}</div>` : '';
+  const preisHtml = e.preis ? `<div class="card-preis">Preis: <strong>${e.preis.toFixed(2)} €</strong></div>` : '';
+  const datumHtml = (e.datum||e.bezirk) ? `<div class="card-meta">${[e.bezirk,e.datum?formatDatum(e.datum):null].filter(Boolean).join(' · ')}</div>` : '';
+  const barsHtml = e.kruste!==null ? `<div class="mini-bars">
+    ${miniBar('Kruste',e.kruste)}${miniBar('Brot',e.brot)}${miniBar('Fleisch',e.fleisch)}
+  </div>` : '';
 
   div.innerHTML = `
     ${imgHtml}${placeholder}
     <div class="card-body">
       <div class="card-header">
         <div class="card-name">${e.name}</div>
-        ${badgeHtml}
+        <span class="rank-badge ${rankClass}">${rank}</span>
       </div>
-      ${datumHtml}
-      ${sorteHtml}
+      ${datumHtml}${sorteHtml}
       <div style="display:flex;align-items:baseline;gap:0.5rem;margin-top:0.2rem;">
         <span class="score-big">${e.gesamt.toFixed(2)}</span>
         <span class="score-stars">${starsFor(e.gesamt)}</span>
       </div>
-      ${barsHtml}
-      ${preisHtml}
+      ${barsHtml}${preisHtml}
+    </div>
+    <div class="edit-overlay ${adminMode?'show':''}">
+      <button class="btn-edit-card" onclick="event.stopPropagation();openEditModal(${e.id})">✏️ Bearbeiten</button>
     </div>`;
+
+  div.onclick = () => openDetailModal(e);
   return div;
 }
 
@@ -472,18 +806,28 @@ function makeCardUnrated(e) {
         <span class="badge-unbewertet">ausstehend</span>
       </div>
       ${e.bezirk?`<div class="card-meta">${e.bezirk}</div>`:''}
-      ${e.anmerkung?`<div class="card-meta" style="font-style:italic;">${e.anmerkung}</div>`:''}
+      ${e.anmerkung?`<div class="card-meta" style="font-style:italic;font-size:0.78rem;">${e.anmerkung}</div>`:''}
+    </div>
+    <div class="edit-overlay ${adminMode?'show':''}">
+      <button class="btn-edit-card" onclick="event.stopPropagation();openEditModal(${e.id})">✏️</button>
     </div>`;
+  if (adminMode) div.onclick = () => openEditModal(e.id);
   return div;
 }
 
 function miniBar(label, val) {
-  const pct = val !== null ? (val/10*100).toFixed(0) : 0;
+  const pct = val!==null ? (val/10*100).toFixed(0) : 0;
   return `<div class="mini-bar-row">
     <span class="mini-bar-label">${label}</span>
     <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${pct}%"></div></div>
     <span style="font-size:0.72rem;width:24px;text-align:right;">${val!==null?val:'-'}</span>
   </div>`;
+}
+
+function starsFor(n) {
+  if (n===null) return '';
+  const full=Math.floor(n/2), half=(n/2-full)>=0.5?1:0;
+  return '★'.repeat(full)+(half?'½':'')+'☆'.repeat(5-full-half);
 }
 
 function formatDatum(d) {
@@ -492,208 +836,200 @@ function formatDatum(d) {
   return `${day}.${m}.${y.slice(2)}`;
 }
 
-// ═══════════════════════════════════════════
-// SORTE PILLS
-// ═══════════════════════════════════════════
+// ─── PILLS & SELECTS ──────────────────────────────────
 function buildSortePills() {
   const allSorten = new Set();
   entries.forEach(e => e.sorte.forEach(s => allSorten.add(s)));
   const container = document.getElementById('sortePills');
   container.innerHTML = '';
   const all = document.createElement('span');
-  all.className = 'pill active';
-  all.textContent = 'Alle Sorten';
+  all.className = 'pill active'; all.textContent = 'Alle Sorten';
   all.onclick = () => { activeFilter=''; document.querySelectorAll('#sortePills .pill').forEach(p=>p.classList.remove('active')); all.classList.add('active'); renderCards(); };
   container.appendChild(all);
   [...allSorten].sort().forEach(s => {
     const p = document.createElement('span');
-    p.className = 'pill';
-    p.textContent = s;
-    p.onclick = () => {
-      activeFilter = s;
-      document.querySelectorAll('#sortePills .pill').forEach(p2=>p2.classList.remove('active'));
-      p.classList.add('active');
-      renderCards();
-    };
+    p.className = 'pill'; p.textContent = s;
+    p.onclick = () => { activeFilter=s; document.querySelectorAll('#sortePills .pill').forEach(p2=>p2.classList.remove('active')); p.classList.add('active'); renderCards(); };
     container.appendChild(p);
   });
 }
 
 function buildBezirkSelect() {
   const sel = document.getElementById('bezirkSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Alle</option>';
   const bezirke = [...new Set(entries.filter(e=>e.bezirk).map(e=>e.bezirk))].sort();
-  bezirke.forEach(b => {
-    const o = document.createElement('option');
-    o.value = b; o.textContent = b;
-    sel.appendChild(o);
-  });
+  bezirke.forEach(b => { const o=document.createElement('option'); o.value=b; o.textContent=b; sel.appendChild(o); });
+  sel.value = cur;
 }
 
-// ═══════════════════════════════════════════
-// MODAL
-// ═══════════════════════════════════════════
-function openModal(e) {
-  const ov = document.getElementById('modalOverlay');
+// ─── DETAIL MODAL ─────────────────────────────────────
+function openDetailModal(e) {
+  const photoSrc = getPhotoSrc(e);
+  document.getElementById('modalImgWrap').innerHTML = photoSrc
+    ? `<img class="modal-img" src="${photoSrc}" alt="${e.name}" onerror="this.style.display='none'">` : '';
   document.getElementById('modalTitle').textContent = e.name;
   document.getElementById('modalMeta').textContent = [e.bezirk, e.datum?formatDatum(e.datum):null, e.preis?e.preis.toFixed(2)+' €':null].filter(Boolean).join(' · ');
-  document.getElementById('modalScore').textContent = e.gesamt !== null ? e.gesamt.toFixed(2) : '–';
 
-  const imgWrap = document.getElementById('modalImgWrap');
-  imgWrap.innerHTML = e.foto
-    ? `<img class="modal-img" src="fotos/${e.foto}" alt="${e.name}" onerror="this.style.display='none'">`
-    : '';
+  if (e.gesamt !== null) {
+    document.getElementById('modalScore').textContent = e.gesamt.toFixed(2);
+    document.getElementById('modalScoreMax').textContent = '/ 10';
+  } else {
+    document.getElementById('modalScore').textContent = '–';
+    document.getElementById('modalScoreMax').textContent = 'noch nicht bewertet';
+  }
 
-  const bars = document.getElementById('modalBars');
-  bars.innerHTML = e.kruste!==null ? [
-    ['Kruste',e.kruste],['Brot',e.brot],['Fleisch',e.fleisch]
-  ].map(([l,v])=>`<div class="bar-row">
-    <span class="bar-label">${l}</span>
-    <div class="bar-track"><div class="bar-fill" style="width:${(v/10*100).toFixed(0)}%"></div></div>
-    <span class="bar-val">${v}</span>
-  </div>`).join('') : '';
+  document.getElementById('modalBars').innerHTML = e.kruste!==null ? [['Kruste',e.kruste],['Brot',e.brot],['Fleisch',e.fleisch]].map(([l,v])=>`
+    <div class="bar-row">
+      <span class="bar-label">${l}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${(v/10*100).toFixed(0)}%"></div></div>
+      <span class="bar-val">${v}</span>
+    </div>`).join('') : '';
 
   const ann = document.getElementById('modalAnmerkung');
-  if (e.anmerkung) { ann.textContent = '„' + e.anmerkung + '"'; ann.style.display='block'; }
-  else ann.style.display='none';
+  ann.style.display = e.anmerkung ? 'block' : 'none';
+  if (e.anmerkung) ann.textContent = '„' + e.anmerkung + '"';
 
   document.getElementById('modalSorte').innerHTML = e.sorte.map(s=>`<span class="sorte-tag">${s}</span>`).join('');
-  ov.classList.add('open');
+  document.getElementById('modalOverlay').classList.add('open');
 }
 
-function closeModal(ev) {
-  if (ev.target === document.getElementById('modalOverlay')) {
+function closeDetailModal(ev) {
+  if (ev.target === document.getElementById('modalOverlay'))
     document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ─── EDIT MODAL ───────────────────────────────────────
+function openEditModal(id) {
+  if (!adminMode) { showToast('Admin-Modus erforderlich.'); return; }
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  currentEditId = id;
+
+  document.getElementById('editModalTitle').textContent = 'Bearbeiten: ' + e.name;
+  document.getElementById('e-id').value = id;
+  document.getElementById('e-name').value = e.name;
+  document.getElementById('e-bezirk').value = e.bezirk || '';
+  document.getElementById('e-preis').value = e.preis !== null ? e.preis : '';
+  document.getElementById('e-sorte').value = e.sorte.join('; ');
+  document.getElementById('e-kruste').value = e.kruste !== null ? e.kruste : '';
+  document.getElementById('e-brot').value = e.brot !== null ? e.brot : '';
+  document.getElementById('e-fleisch').value = e.fleisch !== null ? e.fleisch : '';
+  document.getElementById('e-datum').value = e.datum || '';
+  document.getElementById('e-anmerkung').value = e.anmerkung || '';
+
+  const preview = document.getElementById('e-foto-preview');
+  const photoSrc = getPhotoSrc(e);
+  if (photoSrc) { preview.src = photoSrc; preview.classList.add('show'); }
+  else { preview.classList.remove('show'); preview.src = ''; }
+  document.getElementById('e-foto').value = '';
+
+  document.getElementById('editModalOverlay').classList.add('open');
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function closeEditModal() {
+  document.getElementById('editModalOverlay').classList.remove('open');
+  currentEditId = null;
+}
+
+async function saveEdit() {
+  const id = parseInt(document.getElementById('e-id').value);
+  const idx = entries.findIndex(x => x.id === id);
+  if (idx < 0) return;
+
+  const kruste = parseFloat(document.getElementById('e-kruste').value);
+  const brot = parseFloat(document.getElementById('e-brot').value);
+  const fleisch = parseFloat(document.getElementById('e-fleisch').value);
+  const hasR = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
+
+  const fileInput = document.getElementById('e-foto');
+  if (fileInput.files[0]) {
+    const b64 = await readFileAsB64(fileInput.files[0]);
+    savePhotoB64(id, b64);
   }
+
+  entries[idx] = {
+    ...entries[idx],
+    name: document.getElementById('e-name').value.trim() || entries[idx].name,
+    bezirk: document.getElementById('e-bezirk').value.trim(),
+    sorte: document.getElementById('e-sorte').value.split(';').map(s=>s.trim()).filter(Boolean),
+    preis: parseFloat(document.getElementById('e-preis').value) || null,
+    gesamt: hasR ? Math.round(((kruste+brot+fleisch)/3)*100)/100 : entries[idx].gesamt,
+    kruste: hasR ? kruste : entries[idx].kruste,
+    brot: hasR ? brot : entries[idx].brot,
+    fleisch: hasR ? fleisch : entries[idx].fleisch,
+    anmerkung: document.getElementById('e-anmerkung').value.trim(),
+    datum: document.getElementById('e-datum').value || entries[idx].datum,
+  };
+
+  save();
+  buildSortePills(); buildBezirkSelect(); renderCards();
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  if (mapInstance) { mapInstance.eachLayer(l => { if (l instanceof L.Marker) mapInstance.removeLayer(l); }); addMapMarkers(); }
+  closeEditModal();
+  showToast('✓ Gespeichert!');
 }
 
-// ═══════════════════════════════════════════
-// MAP
-// ═══════════════════════════════════════════
-function initMap() {
-  if (mapInstance) { mapInstance.invalidateSize(); return; }
-  mapInstance = L.map('map').setView([48.21, 16.37], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(mapInstance);
-
-  const redIcon = L.divIcon({className:'', html:`<div style="background:var(--rot);width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`, iconSize:[14,14], iconAnchor:[7,7]});
-  const grayIcon = L.divIcon({className:'', html:`<div style="background:#888;width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></div>`, iconSize:[10,10], iconAnchor:[5,5]});
-
-  entries.forEach(e => {
-    if (e.lat === null) return;
-    const icon = e.gesamt!==null ? redIcon : grayIcon;
-    const popup = `<strong>${e.name}</strong>${e.bezirk?' ('+e.bezirk+')':''}<br>${e.gesamt!==null?'⭐ '+e.gesamt.toFixed(2)+' / 10':'Noch zu testen'}${e.preis?' · '+e.preis.toFixed(2)+' €':''}`;
-    L.marker([e.lat, e.lng], {icon}).addTo(mapInstance).bindPopup(popup);
-  });
+function deleteEntry() {
+  if (!confirm('Eintrag wirklich löschen?')) return;
+  const id = parseInt(document.getElementById('e-id').value);
+  deletePhotoB64(id);
+  entries = entries.filter(x => x.id !== id);
+  save();
+  buildSortePills(); buildBezirkSelect(); renderCards();
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  closeEditModal();
+  showToast('Eintrag gelöscht.');
 }
 
-// ═══════════════════════════════════════════
-// CHART
-// ═══════════════════════════════════════════
-function initChart() {
-  if (chartInstance) return;
-  const rated = entries.filter(e=>e.gesamt!==null && e.preis!==null);
-  const ctx = document.getElementById('chartCanvas').getContext('2d');
-  chartInstance = new Chart(ctx, {
-    type:'scatter',
-    data:{
-      datasets:[{
-        label:'Leberkäse',
-        data: rated.map(e=>({x:e.preis, y:e.gesamt, label:e.name})),
-        backgroundColor: rated.map(e => {
-          const g = e.gesamt;
-          if (g >= 8.5) return 'rgba(139,26,26,0.9)';
-          if (g >= 7.5) return 'rgba(200,150,26,0.85)';
-          return 'rgba(120,100,80,0.7)';
-        }),
-        pointRadius: 8,
-        pointHoverRadius: 11,
-      }]
-    },
-    options:{
-      responsive:true,
-      plugins:{
-        tooltip:{
-          callbacks:{
-            label: ctx => {
-              const d = ctx.raw;
-              return `${d.label}: ${d.y.toFixed(2)} Punkte · ${d.x.toFixed(2)} €`;
-            }
-          }
-        },
-        legend:{display:false},
-        title:{display:true, text:'Preis-Leistungs-Vergleich', font:{size:15}, color:'#2C1810'}
-      },
-      scales:{
-        x:{title:{display:true,text:'Preis (€)',color:'#6B4E3D'}, grid:{color:'#E8DFC8'}},
-        y:{title:{display:true,text:'Gesamtbewertung',color:'#6B4E3D'}, min:0, max:10, grid:{color:'#E8DFC8'}}
-      }
-    }
-  });
-}
-
-// ═══════════════════════════════════════════
-// ADD ENTRY
-// ═══════════════════════════════════════════
-function addEntry() {
+// ─── ADD ENTRY ────────────────────────────────────────
+async function addEntry() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { showToast('Name ist erforderlich.'); return; }
   const kruste = parseFloat(document.getElementById('f-kruste').value);
   const brot = parseFloat(document.getElementById('f-brot').value);
   const fleisch = parseFloat(document.getElementById('f-fleisch').value);
-  const hasRating = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
-  const gesamt = hasRating ? Math.round(((kruste+brot+fleisch)/3)*100)/100 : null;
+  const hasR = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
   const newId = Math.max(...entries.map(e=>e.id), 0) + 1;
-  const sorteRaw = document.getElementById('f-sorte').value;
-  const bezirk = document.getElementById('f-bezirk').value.trim();
+
+  const fileInput = document.getElementById('f-foto');
+  if (fileInput.files[0]) {
+    const b64 = await readFileAsB64(fileInput.files[0]);
+    savePhotoB64(newId, b64);
+  }
 
   entries.push({
-    id: newId,
-    name,
-    bezirk,
-    sorte: sorteRaw ? sorteRaw.split(';').map(s=>s.trim()).filter(Boolean) : [],
+    id: newId, name,
+    bezirk: document.getElementById('f-bezirk').value.trim(),
+    sorte: document.getElementById('f-sorte').value.split(';').map(s=>s.trim()).filter(Boolean),
     preis: parseFloat(document.getElementById('f-preis').value) || null,
-    gesamt,
-    kruste: hasRating ? kruste : null,
-    brot: hasRating ? brot : null,
-    fleisch: hasRating ? fleisch : null,
+    gesamt: hasR ? Math.round(((kruste+brot+fleisch)/3)*100)/100 : null,
+    kruste: hasR?kruste:null, brot: hasR?brot:null, fleisch: hasR?fleisch:null,
     anmerkung: document.getElementById('f-anmerkung').value.trim(),
     datum: document.getElementById('f-datum').value || '',
-    foto: '',
-    lat: null, lng: null
+    foto: '', lat: null, lng: null
   });
   save();
   ['f-name','f-bezirk','f-preis','f-sorte','f-kruste','f-brot','f-fleisch','f-datum','f-anmerkung'].forEach(id => document.getElementById(id).value='');
-  buildSortePills();
-  buildBezirkSelect();
-  renderCards();
-  if (chartInstance) { chartInstance.destroy(); chartInstance=null; }
+  document.getElementById('f-foto').value='';
+  document.getElementById('f-foto-preview').classList.remove('show');
+  buildSortePills(); buildBezirkSelect(); renderCards();
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
   showToast('✓ Eintrag gespeichert!');
 }
 
-// ═══════════════════════════════════════════
-// CSV IMPORT / EXPORT
-// ═══════════════════════════════════════════
+// ─── CSV ──────────────────────────────────────────────
 function exportCSV() {
   const header = 'name,bezirk,sorte,preis_eur,bewertung_gesamt,kruste,brot,fleisch,anmerkung,datum,foto_dateiname';
   const rows = entries.map(e => [
-    `"${e.name}"`,
-    e.bezirk||'',
-    `"${e.sorte.join('; ')}"`,
-    e.preis!==null?e.preis:'',
-    e.gesamt!==null?e.gesamt:'',
-    e.kruste!==null?e.kruste:'',
-    e.brot!==null?e.brot:'',
-    e.fleisch!==null?e.fleisch:'',
-    `"${(e.anmerkung||'').replace(/"/g,'""')}"`,
-    e.datum||'',
-    e.foto||''
+    `"${e.name}"`, e.bezirk||'', `"${e.sorte.join('; ')}"`,
+    e.preis!==null?e.preis:'', e.gesamt!==null?e.gesamt:'',
+    e.kruste!==null?e.kruste:'', e.brot!==null?e.brot:'', e.fleisch!==null?e.fleisch:'',
+    `"${(e.anmerkung||'').replace(/"/g,'""')}"`, e.datum||'', e.foto||''
   ].join(','));
   const blob = new Blob([[header,...rows].join('\n')], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='leberkaese.csv'; a.click();
-  URL.revokeObjectURL(url);
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='leberkaese.csv'; a.click();
 }
 
 function importCSV(input) {
@@ -701,68 +1037,195 @@ function importCSV(input) {
   const reader = new FileReader();
   reader.onload = ev => {
     const lines = ev.target.result.split('\n').filter(l=>l.trim());
-    if (lines.length < 2) { showToast('Datei leer oder ungültig.'); return; }
-    const existingNames = new Set(entries.map(e=>e.name.toLowerCase()));
+    const existing = new Set(entries.map(e=>e.name.toLowerCase()));
     let added = 0;
     lines.slice(1).forEach(line => {
-      const cols = parseCSVLine(line);
-      if (!cols[0]) return;
-      const name = cols[0].replace(/^"|"$/g,'').trim();
-      if (!name || existingNames.has(name.toLowerCase())) return;
-      const kruste = parseFloat(cols[5])||null;
-      const brot = parseFloat(cols[6])||null;
-      const fleisch = parseFloat(cols[7])||null;
-      const hasR = kruste!==null&&brot!==null&&fleisch!==null;
-      entries.push({
-        id: Math.max(...entries.map(e=>e.id),0)+1,
-        name,
-        bezirk: cols[1]||'',
-        sorte: cols[2] ? cols[2].replace(/^"|"$/g,'').split(';').map(s=>s.trim()).filter(Boolean) : [],
-        preis: parseFloat(cols[3])||null,
-        gesamt: parseFloat(cols[4])||null,
-        kruste, brot, fleisch,
-        anmerkung: (cols[8]||'').replace(/^"|"$/g,''),
-        datum: cols[9]||'',
-        foto: cols[10]||'',
-        lat:null, lng:null
-      });
-      existingNames.add(name.toLowerCase());
-      added++;
+      const c = parseCSVLine(line);
+      if (!c[0]) return;
+      const name = c[0].replace(/^"|"$/g,'').trim();
+      if (!name || existing.has(name.toLowerCase())) return;
+      const k=parseFloat(c[5])||null, b=parseFloat(c[6])||null, f=parseFloat(c[7])||null;
+      entries.push({id:Math.max(...entries.map(e=>e.id),0)+1, name, bezirk:c[1]||'',
+        sorte:c[2]?c[2].replace(/^"|"$/g,'').split(';').map(s=>s.trim()).filter(Boolean):[],
+        preis:parseFloat(c[3])||null, gesamt:parseFloat(c[4])||null,
+        kruste:k, brot:b, fleisch:f,
+        anmerkung:(c[8]||'').replace(/^"|"$/g,''), datum:c[9]||'', foto:c[10]||'', lat:null, lng:null});
+      existing.add(name.toLowerCase()); added++;
     });
-    save();
-    buildSortePills(); buildBezirkSelect(); renderCards();
-    if (chartInstance) { chartInstance.destroy(); chartInstance=null; }
+    save(); buildSortePills(); buildBezirkSelect(); renderCards();
+    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
     showToast(`✓ ${added} neue Einträge importiert.`);
-    input.value='';
+    input.value = '';
   };
   reader.readAsText(file, 'UTF-8');
 }
 
 function parseCSVLine(line) {
-  const result=[]; let cur=''; let inQ=false;
+  const r=[]; let c='',q=false;
   for (let i=0;i<line.length;i++) {
-    const c=line[i];
-    if (c==='"') { if (inQ && line[i+1]==='"') {cur+='"';i++;} else inQ=!inQ; }
-    else if (c===',' && !inQ) { result.push(cur); cur=''; }
-    else cur+=c;
+    const ch=line[i];
+    if (ch==='"') { if (q&&line[i+1]==='"'){c+='"';i++;}else q=!q; }
+    else if (ch===','&&!q){r.push(c);c='';}
+    else c+=ch;
   }
-  result.push(cur);
-  return result;
+  r.push(c); return r;
 }
 
-// ═══════════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════════
+// ─── MAP ──────────────────────────────────────────────
+function initMap() {
+  if (mapInstance) { mapInstance.invalidateSize(); return; }
+  mapInstance = L.map('map').setView([48.21, 16.37], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>', maxZoom:19
+  }).addTo(mapInstance);
+  addMapMarkers();
+}
+
+function addMapMarkers() {
+  const redIcon = L.divIcon({className:'', html:`<div style="background:#8B1A1A;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`, iconSize:[14,14], iconAnchor:[7,7]});
+  const grayIcon = L.divIcon({className:'', html:`<div style="background:#888;width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></div>`, iconSize:[10,10], iconAnchor:[5,5]});
+  entries.forEach(e => {
+    if (e.lat===null) return;
+    const popup = `<strong>${e.name}</strong>${e.bezirk?' ('+e.bezirk+')':''}<br>${e.gesamt!==null?'⭐ '+e.gesamt.toFixed(2)+' / 10':'Noch zu testen'}${e.preis?' · '+e.preis.toFixed(2)+' €':''}`;
+    L.marker([e.lat,e.lng],{icon:e.gesamt!==null?redIcon:grayIcon}).addTo(mapInstance).bindPopup(popup);
+  });
+}
+
+// ─── CHART ────────────────────────────────────────────
+function initChart() {
+  if (chartInstance) return;
+  const rated = entries.filter(e=>e.gesamt!==null&&e.preis!==null);
+  chartInstance = new Chart(document.getElementById('chartCanvas').getContext('2d'), {
+    type:'scatter',
+    data:{datasets:[{
+      label:'Leberkäse',
+      data: rated.map(e=>({x:e.preis,y:e.gesamt,label:e.name})),
+      backgroundColor: rated.map(e=>e.gesamt>=8.5?'rgba(139,26,26,0.9)':e.gesamt>=7.5?'rgba(200,150,26,0.85)':'rgba(120,100,80,0.7)'),
+      pointRadius:8, pointHoverRadius:11,
+    }]},
+    options:{responsive:true,plugins:{
+      tooltip:{callbacks:{label:ctx=>`${ctx.raw.label}: ${ctx.raw.y.toFixed(2)} Pkt · ${ctx.raw.x.toFixed(2)} €`}},
+      legend:{display:false},
+      title:{display:true,text:'Preis-Leistungs-Vergleich',font:{size:15},color:'#2C1810'}
+    },scales:{
+      x:{title:{display:true,text:'Preis (€)',color:'#6B4E3D'},grid:{color:'#E8DFC8'}},
+      y:{title:{display:true,text:'Gesamtbewertung',color:'#6B4E3D'},min:0,max:10,grid:{color:'#E8DFC8'}}
+    }}
+  });
+}
+
+// ─── TOAST ────────────────────────────────────────────
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
 }
 
-// ═══════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════
+// ─── BUNDESLÄNDER ─────────────────────────────────────
+let blEntries = JSON.parse(localStorage.getItem('lk_bl_entries') || '[]');
+
+function saveBL() { localStorage.setItem('lk_bl_entries', JSON.stringify(blEntries)); }
+
+function blShowTab(name, btn) {
+  document.getElementById('bl-liste').style.display = name==='liste' ? 'block' : 'none';
+  document.getElementById('bl-form').style.display  = name==='form'  ? 'block' : 'none';
+  document.querySelectorAll('.bl-tab-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (name === 'liste') renderBLCards();
+}
+
+function renderBLCards() {
+  const grid = document.getElementById('blCardsGrid');
+  const noRes = document.getElementById('blNoResults');
+  grid.innerHTML = '';
+  if (blEntries.length === 0) { noRes.style.display='block'; return; }
+  noRes.style.display = 'none';
+  const sorted = [...blEntries].sort((a,b) => (b.gesamt||0)-(a.gesamt||0));
+  sorted.forEach((e,i) => grid.appendChild(makeBLCard(e, i+1)));
+}
+
+function makeBLCard(e, rank) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.onclick = () => openDetailModal(e);
+
+  const photoSrc = localStorage.getItem('lk_photo_bl_' + e.id) || null;
+  const imgHtml = photoSrc ? `<img class="card-img" src="${photoSrc}" alt="${e.name}" loading="lazy">` : '';
+  const placeholder = `<div class="card-img-placeholder" ${photoSrc?'style="display:none"':''}>🏔️</div>`;
+  const rankClass = rank===1?'gold':rank===2?'silver':rank===3?'bronze':'';
+  const barsHtml = e.kruste!==null ? `<div class="mini-bars">
+    ${miniBar('Kruste',e.kruste)}${miniBar('Brot',e.brot)}${miniBar('Fleisch',e.fleisch)}
+  </div>` : '';
+
+  div.innerHTML = `
+    ${imgHtml}${placeholder}
+    <div class="card-body">
+      <div class="card-header">
+        <div class="card-name">${e.name}</div>
+        <span class="rank-badge ${rankClass}">${rank}</span>
+      </div>
+      <div class="card-meta"><span class="bl-badge">${e.bundesland}</span>${e.ort?' · '+e.ort:''}${e.datum?' · '+formatDatum(e.datum):''}</div>
+      ${e.sorte.length?`<div class="card-sorte">${e.sorte.map(s=>`<span class="sorte-tag">${s}</span>`).join('')}</div>`:''}
+      ${e.gesamt!==null?`<div style="display:flex;align-items:baseline;gap:0.5rem;margin-top:0.2rem;">
+        <span class="score-big">${e.gesamt.toFixed(2)}</span>
+        <span class="score-stars">${starsFor(e.gesamt)}</span>
+      </div>${barsHtml}`:'<div class="card-meta" style="margin-top:0.3rem;">Noch nicht bewertet</div>'}
+      ${e.preis?`<div class="card-preis">Preis: <strong>${e.preis.toFixed(2)} €</strong></div>`:''}
+      ${e.autor?`<div class="card-meta" style="margin-top:0.3rem;">von ${e.autor}</div>`:''}
+    </div>
+    ${adminMode?`<div class="edit-overlay show"><button class="btn-edit-card" onclick="event.stopPropagation();deleteBLEntry(${e.id})">🗑️</button></div>`:''}`;
+  return div;
+}
+
+async function addBLEntry() {
+  const bundesland = document.getElementById('bl-bundesland').value;
+  const name = document.getElementById('bl-name').value.trim();
+  if (!bundesland) { showToast('Bitte Bundesland wählen.'); return; }
+  if (!name) { showToast('Name ist erforderlich.'); return; }
+
+  const kruste = parseFloat(document.getElementById('bl-kruste').value);
+  const brot   = parseFloat(document.getElementById('bl-brot').value);
+  const fleisch = parseFloat(document.getElementById('bl-fleisch').value);
+  const hasR = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
+  const newId = Date.now();
+
+  const fileInput = document.getElementById('bl-foto');
+  if (fileInput.files[0]) {
+    const b64 = await readFileAsB64(fileInput.files[0]);
+    localStorage.setItem('lk_photo_bl_' + newId, b64);
+  }
+
+  blEntries.push({
+    id: newId, name, bundesland,
+    ort: document.getElementById('bl-ort').value.trim(),
+    sorte: document.getElementById('bl-sorte').value.split(';').map(s=>s.trim()).filter(Boolean),
+    preis: parseFloat(document.getElementById('bl-preis').value) || null,
+    gesamt: hasR ? Math.round(((kruste+brot+fleisch)/3)*100)/100 : null,
+    kruste: hasR?kruste:null, brot: hasR?brot:null, fleisch: hasR?fleisch:null,
+    anmerkung: document.getElementById('bl-anmerkung').value.trim(),
+    datum: document.getElementById('bl-datum').value || '',
+    autor: document.getElementById('bl-autor').value.trim(),
+    lat: null, lng: null, foto: '', bezirk: bundesland
+  });
+  saveBL();
+  ['bl-name','bl-ort','bl-sorte','bl-preis','bl-kruste','bl-brot','bl-fleisch','bl-datum','bl-anmerkung','bl-autor'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('bl-bundesland').value='';
+  document.getElementById('bl-foto').value='';
+  document.getElementById('bl-foto-preview').classList.remove('show');
+  showToast('✓ Eintrag gespeichert!');
+  blShowTab('liste', document.querySelector('.bl-tab-pill'));
+}
+
+function deleteBLEntry(id) {
+  if (!adminMode || !confirm('Eintrag löschen?')) return;
+  localStorage.removeItem('lk_photo_bl_' + id);
+  blEntries = blEntries.filter(e => e.id !== id);
+  saveBL(); renderBLCards();
+  showToast('Gelöscht.');
+}
+
+// ─── INIT ─────────────────────────────────────────────
+updateAdminUI();
 buildBezirkSelect();
 buildSortePills();
 renderCards();
