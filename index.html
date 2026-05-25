@@ -282,11 +282,11 @@ select:focus,input:focus{border-color:var(--rot);}
     // Live-Listener: Forum-Posts in Echtzeit empfangen
     onValue(ref(db, 'forum'), snapshot => {
       const data = snapshot.val();
-      window._fbForumPosts = data ? Object.entries(data)
+      const posts = data ? Object.entries(data)
         .map(([key, val]) => ({...val, _fbKey: key}))
         .sort((a,b) => (a.ts||0) - (b.ts||0)) : [];
-      window.forumPosts = window._fbForumPosts;
-      if (typeof renderForum === 'function') renderForum();
+      // _setForumPosts aktualisiert die lokale Variable + rendert
+      if (typeof window._setForumPosts === 'function') window._setForumPosts(posts);
     });
 
     // Firebase-Funktionen global verfügbar machen
@@ -1639,6 +1639,13 @@ function deleteComment(idx) {
 
 // ─── FORUM ────────────────────────────────────────────
 let forumPosts = JSON.parse(localStorage.getItem('lk_forum') || '[]');
+
+// Von Firebase-Modul aufgerufen wenn neue Posts ankommen
+window._setForumPosts = function(posts) {
+  forumPosts = posts;
+  localStorage.setItem('lk_forum', JSON.stringify(forumPosts));
+  renderForum();
+};
 
 function saveForum() { localStorage.setItem('lk_forum', JSON.stringify(forumPosts)); }
 
