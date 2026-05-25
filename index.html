@@ -331,6 +331,9 @@ select:focus,input:focus{border-color:var(--rot);}
     <h2>🥂 Der edle Ziegel</h2>
     <p>Wenn Leberkäse mehr kostet als ein Mittagessen — und es wert ist.</p>
   </div>
+  <div id="luxusAdminBar" style="display:none;margin-bottom:1rem;">
+    <button class="btn-primary" onclick="addLuxusEntry()">+ Luxus-Eintrag hinzufügen</button>
+  </div>
   <div class="luxus-grid" id="luxusGrid"></div>
 </div>
 
@@ -808,6 +811,13 @@ const INITIAL_DATA = [
   {id:108,name:"Thum Schinken Bio Markt Freyung",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:109,name:"Fleischerei Steirisch Gutmann",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:110,name:"Bar Barbara",bezirk:"1090",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.226,lng:16.358},
+  // ── Luxus ──────────────────────────────────────────
+  {id:201,name:"Zotter Wien",bezirk:"1010",sorte:["Schokolade"],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"Kilopreis: 80 €",datum:"",foto:"",lat:48.208,lng:16.374,kategorie:"luxus"},
+  {id:202,name:"Atelier 7",bezirk:"1070",sorte:["Signature"],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.202,lng:16.356,kategorie:"luxus"},
+  {id:203,name:"Bành Wien Mraz",bezirk:"1020",sorte:["Fusion"],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.216,lng:16.385,kategorie:"luxus"},
+  {id:204,name:"Feinkosterei Neuer Markt",bezirk:"1010",sorte:["Premium"],preis:15.80,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.207,lng:16.370,kategorie:"luxus"},
+  {id:205,name:"Heunisch & Erben",bezirk:"1030",sorte:["Hausgemacht"],preis:11.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.199,lng:16.396,kategorie:"luxus"},
+  {id:206,name:"Gugumuck",bezirk:"1130",sorte:["Schnecken-LK"],preis:9.90,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"Schneckenleberkäse – legendär",datum:"",foto:"",lat:48.170,lng:16.288,kategorie:"luxus"},
 ];
 
 // ─── STATE ────────────────────────────────────────────
@@ -905,6 +915,8 @@ function updateAdminUI() {
   banner.classList.toggle('show', adminMode);
   if (addForm) { addForm.style.display = adminMode ? 'block' : 'none'; }
   if (lockedNotice) { lockedNotice.style.display = adminMode ? 'none' : 'block'; }
+  const lxBar = document.getElementById('luxusAdminBar');
+  if (lxBar) lxBar.style.display = adminMode ? 'block' : 'none';
 }
 
 // ─── TABS ─────────────────────────────────────────────
@@ -926,8 +938,8 @@ function renderCards() {
   const search = document.getElementById('searchInput').value.toLowerCase().trim();
   const nurBewertet = document.getElementById('nurBewertet').checked;
 
-  let rated = entries.filter(e => e.gesamt !== null);
-  let unrated = entries.filter(e => e.gesamt === null);
+  let rated = entries.filter(e => e.gesamt !== null && e.kategorie !== 'luxus');
+  let unrated = entries.filter(e => e.gesamt === null && e.kategorie !== 'luxus');
 
   if (bezirk) { rated = rated.filter(e => e.bezirk === bezirk); unrated = unrated.filter(e => e.bezirk === bezirk); }
   if (search) { rated = rated.filter(e => e.name.toLowerCase().includes(search)); unrated = unrated.filter(e => e.name.toLowerCase().includes(search)); }
@@ -1180,7 +1192,7 @@ async function saveEdit() {
   };
 
   save();
-  buildSortePills(); buildBezirkSelect(); renderCards();
+  buildSortePills(); buildBezirkSelect(); renderCards(); renderLuxusCards();
   if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
   if (mapInstance) { mapInstance.eachLayer(l=>{if(l instanceof L.Marker)mapInstance.removeLayer(l);}); addMapMarkers(); }
   closeEditModal();
@@ -1363,56 +1375,49 @@ function sendKontakt() {
 }
 
 // ─── LUXUS ────────────────────────────────────────────
-const LUXUS_BASE = [
-  {id:'lx1', name:'Zotter Wien',            preis:16.00, detail:'Kilopreis: 80 €',  sorte:'Schokoladen-LK', gesamt:null, kruste:null, brot:null, fleisch:null, anmerkung:''},
-  {id:'lx2', name:'Atelier 7',              preis:16.00, detail:'',                 sorte:'Signature',       gesamt:null, kruste:null, brot:null, fleisch:null, anmerkung:''},
-  {id:'lx3', name:'Bành Wien Mraz',         preis:16.00, detail:'',                 sorte:'Fusion',          gesamt:null, kruste:null, brot:null, fleisch:null, anmerkung:''},
-  {id:'lx4', name:'Feinkosterei Neuer Markt',preis:15.80,detail:'',                 sorte:'Premium',         gesamt:null, kruste:null, brot:null, fleisch:null, anmerkung:''},
-  {id:'lx5', name:'Heunisch & Erben',       preis:11.00, detail:'',                 sorte:'Hausgemacht',     gesamt:null, kruste:null, brot:null, fleisch:null, anmerkung:''},
-  {id:'lx6', name:'Gugumuck',               preis:9.90,  detail:'Schnecken-LK',     sorte:'Escargot',        gesamt:null, kruste:null, brot:null, fleisch:null, anmerkung:'Schneckenleberkäse – legendär'},
-];
-let luxusEntries = JSON.parse(localStorage.getItem('lk_luxus') || 'null') || LUXUS_BASE;
-function saveLuxus() { localStorage.setItem('lk_luxus', JSON.stringify(luxusEntries)); }
-
 function renderLuxusCards() {
   const grid = document.getElementById('luxusGrid');
+  const bar  = document.getElementById('luxusAdminBar');
   if (!grid) return;
+  if (bar) bar.style.display = adminMode ? 'block' : 'none';
   grid.innerHTML = '';
-  const sorted = [...luxusEntries].sort((a,b) => (b.gesamt||0)-(a.gesamt||0) || b.preis-a.preis);
-  sorted.forEach((e,i) => {
+  const luxus = entries.filter(e => e.kategorie === 'luxus')
+    .sort((a,b) => (b.gesamt||0)-(a.gesamt||0) || b.preis-a.preis);
+  luxus.forEach((e, i) => {
     const div = document.createElement('div');
     div.className = 'luxus-card';
-    const photoSrc = localStorage.getItem('lk_photo_lx_' + e.id);
+    const photoSrc = getPhotoSrc(e);
     div.innerHTML = `
-      ${photoSrc?`<img src="${photoSrc}" style="width:100%;height:130px;object-fit:cover;border-radius:8px;margin-bottom:0.5rem;" alt="${e.name}">`:''}
+      ${photoSrc ? `<img src="${photoSrc}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:0.6rem;" alt="${e.name}" onerror="this.style.display='none'">` : ''}
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
         <div class="luxus-card-name">${e.name}</div>
-        ${e.gesamt!==null?`<span style="background:rgba(200,150,26,0.3);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:bold;color:var(--gold-hell);flex-shrink:0;">${i+1}</span>`:''}
+        ${e.gesamt!==null ? `<span style="background:rgba(200,150,26,0.3);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:bold;color:var(--gold-hell);flex-shrink:0;">${i+1}</span>` : ''}
       </div>
-      <div class="luxus-card-preis">${e.preis.toFixed(2)} €</div>
-      ${e.detail?`<div class="luxus-card-detail">${e.detail}</div>`:''}
-      <div class="luxus-badge">${e.sorte}</div>
-      ${e.gesamt!==null?`<div class="luxus-score"><span class="big">${e.gesamt.toFixed(2)}</span><span style="color:#B09060;font-size:0.8rem;">/ 10</span></div>`:'<div style="font-size:0.75rem;color:#7A6040;font-style:italic;">Noch nicht getestet</div>'}
-      ${e.anmerkung?`<div class="luxus-card-sorte" style="font-style:italic;">${e.anmerkung}</div>`:''}
-      ${adminMode?`<button class="luxus-edit-btn" style="display:block;" onclick="openLuxusEdit('${e.id}')">✏️ Edit</button>`:''}`;
+      <div class="luxus-card-preis">${e.preis ? e.preis.toFixed(2)+' €' : '– €'}</div>
+      ${e.sorte.length ? `<div class="luxus-badge">${e.sorte.join(' · ')}</div>` : ''}
+      ${e.gesamt!==null
+        ? `<div class="luxus-score"><span class="big">${e.gesamt.toFixed(2)}</span><span style="color:#B09060;font-size:0.8rem;">/ 10</span></div>
+           <div style="display:flex;flex-direction:column;gap:0.25rem;margin-top:0.3rem;">
+             ${['Kruste','Brot','Fleisch'].map((l,li)=>{const v=[e.kruste,e.brot,e.fleisch][li];return v!==null?`<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.7rem;color:#9A7840;"><span style="width:40px;">${l}</span><div style="flex:1;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;"><div style="width:${(v/10*100).toFixed(0)}%;height:100%;background:var(--gold-hell);border-radius:2px;"></div></div><span style="width:20px;text-align:right;">${v}</span></div>`:''}).join('')}
+           </div>`
+        : '<div style="font-size:0.75rem;color:#7A6040;font-style:italic;margin-top:0.3rem;">Noch nicht getestet</div>'}
+      ${e.anmerkung ? `<div class="luxus-card-detail" style="margin-top:0.4rem;font-style:italic;">${e.anmerkung}</div>` : ''}
+      ${e.datum ? `<div style="font-size:0.7rem;color:#6A5030;margin-top:0.2rem;">${formatDatum(e.datum)}</div>` : ''}
+      ${adminMode ? `<button class="luxus-edit-btn" style="display:block;" onclick="event.stopPropagation();openEditModal(${e.id})">✏️ Bearbeiten</button>` : ''}`;
+    div.onclick = () => openDetailModal(e);
     grid.appendChild(div);
   });
 }
 
-function openLuxusEdit(id) {
+function addLuxusEntry() {
   if (!adminMode) return;
-  const e = luxusEntries.find(x => x.id === id);
-  if (!e) return;
-  const k = prompt('Kruste (0-10):', e.kruste||'');
-  const b = prompt('Brot (0-10):', e.brot||'');
-  const f = prompt('Fleisch (0-10):', e.fleisch||'');
-  const ann = prompt('Anmerkung:', e.anmerkung||'');
-  const kN = parseFloat(k), bN = parseFloat(b), fN = parseFloat(f);
-  const hasR = !isNaN(kN)&&!isNaN(bN)&&!isNaN(fN);
-  if (hasR) { e.kruste=kN; e.brot=bN; e.fleisch=fN; e.gesamt=Math.round(((kN+bN+fN)/3)*100)/100; }
-  if (ann !== null) e.anmerkung = ann;
-  saveLuxus(); renderLuxusCards();
-  showToast('✓ Luxus-Eintrag aktualisiert!');
+  const newId = Math.max(...entries.map(e=>e.id), 0) + 1;
+  entries.push({id:newId, name:'Neuer Luxus-Eintrag', bezirk:'', sorte:[], preis:null,
+    gesamt:null, kruste:null, brot:null, fleisch:null, anmerkung:'', datum:'', foto:'',
+    lat:null, lng:null, kategorie:'luxus'});
+  save();
+  renderLuxusCards();
+  openEditModal(newId);
 }
 
 // ─── KOMMENTARE ───────────────────────────────────────
