@@ -597,6 +597,14 @@ select:focus,input:focus{border-color:var(--rot);}
       <p style="font-size:0.75rem;color:var(--text-weich);margin-top:0.8rem;">Öffnet deine Mail-App mit den vorausgefüllten Daten.</p>
     </div>
   </div>
+
+  <div style="margin-top:2rem;background:var(--karte);border-radius:var(--radius);padding:1.5rem;box-shadow:0 2px 10px var(--schatten);max-width:440px;">
+    <div style="font-size:1.8rem;margin-bottom:0.5rem;">🔔</div>
+    <h3 style="font-size:1rem;color:var(--braun);margin-bottom:0.3rem;">Freitags-Ziegel-Alarm</h3>
+    <p style="font-size:0.82rem;color:var(--text-weich);margin-bottom:0.8rem;line-height:1.5;">Jeden Freitag um ~11:30 kommt eine Push-Notification: <em>„Es ist Freitag – die Fleischereien warten."</em></p>
+    <p id="reminderStatus" style="font-size:0.78rem;color:var(--text-weich);margin-bottom:0.8rem;"></p>
+    <button id="reminderBtn" class="btn-primary" onclick="toggleReminder()">🔕 Freitags-Reminder aktivieren</button>
+  </div>
 </div>
 
 <!-- HINZUFÜGEN / ADMIN -->
@@ -1637,11 +1645,90 @@ function deleteBLEntry(id) {
   showToast('Gelöscht.');
 }
 
+// ─── SERVICE WORKER & FREITAGS-REMINDER ───────────────
+let swReg = null;
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    swReg = reg;
+    // Periodic Background Sync registrieren (Chrome Android)
+    if ('periodicSync' in reg) {
+      navigator.permissions.query({ name: 'periodic-background-sync' }).then(status => {
+        if (status.state === 'granted') {
+          reg.periodicSync.register('friday-check', { minInterval: 6 * 60 * 60 * 1000 });
+        }
+      }).catch(() => {});
+    }
+  }).catch(() => {});
+}
+
+function reminderEnabled() { return localStorage.getItem('lk_reminder') === '1'; }
+
+async function toggleReminder() {
+  if (reminderEnabled()) {
+    localStorage.removeItem('lk_reminder');
+    updateReminderUI();
+    showToast('Reminder deaktiviert.');
+    return;
+  }
+  if (!('Notification' in window)) {
+    showToast('Dein Browser unterstützt keine Benachrichtigungen.');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    localStorage.setItem('lk_reminder', '1');
+    updateReminderUI();
+    showToast('✓ Freitags-Reminder aktiviert! 🧱');
+    // Sofort eine Test-Notification anzeigen
+    if (swReg) {
+      swReg.showNotification('🧱 Reminder aktiviert!', {
+        body: 'Du kriegst ab jetzt jeden Freitag um 11:30 einen Ziegel-Alarm.',
+        icon: './icon.svg', tag: 'test'
+      });
+    }
+  } else {
+    showToast('Benachrichtigungen wurden blockiert – bitte in den Browser-Einstellungen erlauben.');
+  }
+}
+
+function updateReminderUI() {
+  const btn  = document.getElementById('reminderBtn');
+  const stat = document.getElementById('reminderStatus');
+  if (!btn) return;
+  const on = reminderEnabled();
+  btn.textContent = on ? '🔔 Reminder deaktivieren' : '🔕 Freitags-Reminder aktivieren';
+  btn.style.background = on ? '#2A6B2A' : 'var(--rot)';
+  if (stat) stat.textContent = on
+    ? '✓ Aktiv – du wirst jeden Freitag um ~11:30 erinnert.'
+    : 'Noch nicht aktiviert.';
+}
+
+// Freitags-Check beim App-Start & jede Minute
+function checkFridayNow() {
+  if (!reminderEnabled()) return;
+  const now   = new Date();
+  const today = now.toDateString();
+  if (now.getDay() !== 5) return;                          // nur Freitag
+  if (now.getHours() < 11 || now.getHours() > 13) return; // nur 11–13 Uhr
+  if (localStorage.getItem('lk_reminder_shown') === today) return; // nur 1x/Tag
+  localStorage.setItem('lk_reminder_shown', today);
+
+  if (Notification.permission === 'granted' && swReg) {
+    swReg.active?.postMessage({ type: 'FRIDAY_REMINDER' });
+  } else {
+    showToast('🧱 Es ist Freitag – Zeit für einen hoaßen Ziegel!');
+  }
+}
+setInterval(checkFridayNow, 60_000);
+checkFridayNow();
+
 // ─── INIT ─────────────────────────────────────────────
 updateAdminUI();
 buildBezirkSelect();
 buildSortePills();
 renderCards();
+setTimeout(updateReminderUI, 100);
 </script>
 </body>
 </html>
