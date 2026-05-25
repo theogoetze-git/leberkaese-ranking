@@ -264,6 +264,37 @@ select:focus,input:focus{border-color:var(--rot);}
   .ressourcen-hero h2{font-size:1.3rem;}
 }
 </style>
+<!-- Firebase Realtime Database (Forum-Sync) -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getDatabase, ref, onValue, push, remove, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+  // !! Hier deine Firebase-Konfiguration eintragen !!
+  const firebaseConfig = {
+    databaseURL: "DEINE_DATABASE_URL"
+  };
+
+  let db = null;
+  try {
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+
+    // Live-Listener: Forum-Posts in Echtzeit empfangen
+    onValue(ref(db, 'forum'), snapshot => {
+      const data = snapshot.val();
+      window._fbForumPosts = data ? Object.entries(data)
+        .map(([key, val]) => ({...val, _fbKey: key}))
+        .sort((a,b) => (a.ts||0) - (b.ts||0)) : [];
+      window.forumPosts = window._fbForumPosts;
+      if (typeof renderForum === 'function') renderForum();
+    });
+
+    // Firebase-Funktionen global verfügbar machen
+    window._fb = { db, ref, push, remove, set };
+  } catch(e) {
+    console.warn('Firebase nicht konfiguriert – Forum läuft lokal.', e);
+  }
+</script>
 </head>
 <body>
 
@@ -1609,49 +1640,36 @@ function deleteComment(idx) {
 // ─── FORUM ────────────────────────────────────────────
 let forumPosts = JSON.parse(localStorage.getItem('lk_forum') || '[]');
 
-// forum.json vom Repo laden (= kanonische Quelle, auf allen Geräten gleich)
-async function loadForumFromGitHub() {
-  try {
-    const resp = await fetch('forum.json?_=' + Date.now());
-    if (!resp.ok) return;
-    const data = await resp.json();
-    if (!Array.isArray(data)) return;
-    // GitHub-Version übernehmen wenn sie Einträge hat oder lokal leer ist
-    if (data.length > 0 || forumPosts.length === 0) {
-      forumPosts = data;
-      localStorage.setItem('lk_forum', JSON.stringify(forumPosts));
-      renderForum();
-    }
-  } catch(e) { /* offline – lokale Version behalten */ }
-}
-loadForumFromGitHub();
-
 function saveForum() { localStorage.setItem('lk_forum', JSON.stringify(forumPosts)); }
 
-// Forum zu GitHub committen
-async function saveForumToGitHub() {
-  const token = sessionStorage.getItem('lk_gh_token');
-  if (!token) return false;
-  const owner = 'theogoetze-git', repo = 'leberkaese-ranking', branch = 'master';
-  const url = `https://api.github.com/repos/${owner}/${repo}/contents/forum.json`;
-  const headers = { Authorization: `token ${token}`, 'Content-Type': 'application/json' };
-  let sha = null;
-  try { const r = await fetch(url, {headers}); if (r.ok) sha = (await r.json()).sha; } catch(e){}
-  const json = JSON.stringify(forumPosts, null, 2);
-  // Unicode-sicheres btoa
-  const b64 = btoa(unescape(encodeURIComponent(json)));
-  const body = { message: '💬 Forum aktualisiert', content: b64, branch };
-  if (sha) body.sha = sha;
-  const resp = await fetch(url, { method:'PUT', headers, body: JSON.stringify(body) });
-  return resp.ok;
+// Prüfen ob Firebase verfügbar ist
+function fbAvailable() { return !!(window._fb && window._fb.db); }
+
+// Post zu Firebase hinzufügen
+async function fbAddPost(post) {
+  if (!fbAvailable()) return false;
+  try {
+    await window._fb.push(window._fb.ref(window._fb.db, 'forum'), post);
+    return true;
+  } catch(e) { console.error('Firebase post:', e); return false; }
 }
 
-async function saveForumSync() {
-  saveForum();
-  if (sessionStorage.getItem('lk_gh_token')) {
-    const ok = await saveForumToGitHub();
-    showToast(ok ? '✓ Gepostet und synchronisiert!' : '⚠️ Lokal gespeichert – Sync fehlgeschlagen.');
-  }
+// Reply zu Firebase-Post hinzufügen
+async function fbAddReply(fbKey, replies) {
+  if (!fbAvailable() || !fbKey) return false;
+  try {
+    await window._fb.set(window._fb.ref(window._fb.db, `forum/${fbKey}/replies`), replies);
+    return true;
+  } catch(e) { console.error('Firebase reply:', e); return false; }
+}
+
+// Post aus Firebase löschen
+async function fbDeletePost(fbKey) {
+  if (!fbAvailable() || !fbKey) return false;
+  try {
+    await window._fb.remove(window._fb.ref(window._fb.db, `forum/${fbKey}`));
+    return true;
+  } catch(e) { console.error('Firebase delete:', e); return false; }
 }
 
 function renderForum() {
@@ -1693,39 +1711,65 @@ async function postForumPost() {
   const title = document.getElementById('forum-title').value.trim();
   const body  = document.getElementById('forum-body').value.trim();
   if (!title || !body) { showToast('Titel und Inhalt erforderlich.'); return; }
-  forumPosts.push({
+  const post = {
     title, body,
     autor: document.getElementById('forum-autor').value.trim() || 'Anonym',
     datum: new Date().toLocaleDateString('de-AT'),
+    ts: Date.now(),
     replies: []
-  });
-  renderForum();
+  };
   document.getElementById('forum-title').value = '';
   document.getElementById('forum-body').value = '';
   document.getElementById('forum-autor').value = '';
-  await saveForumSync();
+
+  if (fbAvailable()) {
+    const ok = await fbAddPost(post);
+    // onValue-Listener aktualisiert forumPosts + renderForum automatisch
+    showToast(ok ? '✓ Gepostet!' : '⚠️ Offline – nur lokal gespeichert.');
+    if (!ok) { forumPosts.push(post); saveForum(); renderForum(); }
+  } else {
+    forumPosts.push(post); saveForum(); renderForum();
+    showToast('✓ Gepostet! (lokal)');
+  }
 }
 
 async function postReply(postIdx) {
   const text  = document.getElementById('reply-text-' + postIdx)?.value.trim();
   const autor = document.getElementById('reply-autor-' + postIdx)?.value.trim();
   if (!text) { showToast('Antwort darf nicht leer sein.'); return; }
-  if (!forumPosts[postIdx].replies) forumPosts[postIdx].replies = [];
-  forumPosts[postIdx].replies.push({ autor: autor||'Anonym', text, datum: new Date().toLocaleDateString('de-AT') });
-  renderForum();
-  await saveForumSync();
+  const post = forumPosts[postIdx];
+  if (!post.replies) post.replies = [];
+  post.replies.push({ autor: autor||'Anonym', text, datum: new Date().toLocaleDateString('de-AT'), ts: Date.now() });
+
+  if (fbAvailable() && post._fbKey) {
+    const ok = await fbAddReply(post._fbKey, post.replies);
+    showToast(ok ? '✓ Antwort gepostet!' : '⚠️ Offline – nur lokal.');
+    if (!ok) { saveForum(); renderForum(); }
+  } else {
+    saveForum(); renderForum(); showToast('✓ Antwort gepostet!');
+  }
 }
 
 async function deletePost(idx) {
   if (!adminMode || !confirm('Beitrag löschen?')) return;
-  forumPosts.splice(idx, 1); renderForum();
-  await saveForumSync();
+  const post = forumPosts[idx];
+  if (fbAvailable() && post._fbKey) {
+    await fbDeletePost(post._fbKey);
+    // onValue aktualisiert automatisch
+  } else {
+    forumPosts.splice(idx, 1); saveForum(); renderForum();
+  }
 }
 
 async function deleteReply(postIdx, replyIdx) {
   if (!adminMode) return;
-  forumPosts[postIdx].replies.splice(replyIdx, 1); renderForum();
-  await saveForumSync();
+  const post = forumPosts[postIdx];
+  post.replies.splice(replyIdx, 1);
+  if (fbAvailable() && post._fbKey) {
+    await fbAddReply(post._fbKey, post.replies);
+  } else {
+    saveForum(); renderForum();
+  }
 }
 
 // ─── BUNDESLÄNDER ─────────────────────────────────────
