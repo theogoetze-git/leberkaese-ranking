@@ -1,6 +1,6 @@
 // Leberkäse Ranking – Service Worker
 const CACHE = 'lk-v1';
-const ASSETS = ['./', './index.html', './icon.svg', './manifest.json', './photos.json'];
+const ASSETS = ['./', './index.html', './icon.svg', './manifest.json', './photos.json', './forum.json'];
 
 // Installation: Assets cachen für Offline-Nutzung
 self.addEventListener('install', e => {

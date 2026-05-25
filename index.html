@@ -1608,7 +1608,51 @@ function deleteComment(idx) {
 
 // ─── FORUM ────────────────────────────────────────────
 let forumPosts = JSON.parse(localStorage.getItem('lk_forum') || '[]');
+
+// forum.json vom Repo laden (= kanonische Quelle, auf allen Geräten gleich)
+async function loadForumFromGitHub() {
+  try {
+    const resp = await fetch('forum.json?_=' + Date.now());
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (!Array.isArray(data)) return;
+    // GitHub-Version übernehmen wenn sie Einträge hat oder lokal leer ist
+    if (data.length > 0 || forumPosts.length === 0) {
+      forumPosts = data;
+      localStorage.setItem('lk_forum', JSON.stringify(forumPosts));
+      renderForum();
+    }
+  } catch(e) { /* offline – lokale Version behalten */ }
+}
+loadForumFromGitHub();
+
 function saveForum() { localStorage.setItem('lk_forum', JSON.stringify(forumPosts)); }
+
+// Forum zu GitHub committen
+async function saveForumToGitHub() {
+  const token = sessionStorage.getItem('lk_gh_token');
+  if (!token) return false;
+  const owner = 'theogoetze-git', repo = 'leberkaese-ranking', branch = 'master';
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/forum.json`;
+  const headers = { Authorization: `token ${token}`, 'Content-Type': 'application/json' };
+  let sha = null;
+  try { const r = await fetch(url, {headers}); if (r.ok) sha = (await r.json()).sha; } catch(e){}
+  const json = JSON.stringify(forumPosts, null, 2);
+  // Unicode-sicheres btoa
+  const b64 = btoa(unescape(encodeURIComponent(json)));
+  const body = { message: '💬 Forum aktualisiert', content: b64, branch };
+  if (sha) body.sha = sha;
+  const resp = await fetch(url, { method:'PUT', headers, body: JSON.stringify(body) });
+  return resp.ok;
+}
+
+async function saveForumSync() {
+  saveForum();
+  if (sessionStorage.getItem('lk_gh_token')) {
+    const ok = await saveForumToGitHub();
+    showToast(ok ? '✓ Gepostet und synchronisiert!' : '⚠️ Lokal gespeichert – Sync fehlgeschlagen.');
+  }
+}
 
 function renderForum() {
   const container = document.getElementById('forumPosts');
@@ -1645,7 +1689,7 @@ function renderForum() {
   }).join('');
 }
 
-function postForumPost() {
+async function postForumPost() {
   const title = document.getElementById('forum-title').value.trim();
   const body  = document.getElementById('forum-body').value.trim();
   if (!title || !body) { showToast('Titel und Inhalt erforderlich.'); return; }
@@ -1655,30 +1699,33 @@ function postForumPost() {
     datum: new Date().toLocaleDateString('de-AT'),
     replies: []
   });
-  saveForum(); renderForum();
+  renderForum();
   document.getElementById('forum-title').value = '';
   document.getElementById('forum-body').value = '';
   document.getElementById('forum-autor').value = '';
-  showToast('✓ Beitrag gepostet!');
+  await saveForumSync();
 }
 
-function postReply(postIdx) {
+async function postReply(postIdx) {
   const text  = document.getElementById('reply-text-' + postIdx)?.value.trim();
   const autor = document.getElementById('reply-autor-' + postIdx)?.value.trim();
   if (!text) { showToast('Antwort darf nicht leer sein.'); return; }
   if (!forumPosts[postIdx].replies) forumPosts[postIdx].replies = [];
   forumPosts[postIdx].replies.push({ autor: autor||'Anonym', text, datum: new Date().toLocaleDateString('de-AT') });
-  saveForum(); renderForum(); showToast('✓ Antwort gepostet!');
+  renderForum();
+  await saveForumSync();
 }
 
-function deletePost(idx) {
+async function deletePost(idx) {
   if (!adminMode || !confirm('Beitrag löschen?')) return;
-  forumPosts.splice(idx, 1); saveForum(); renderForum();
+  forumPosts.splice(idx, 1); renderForum();
+  await saveForumSync();
 }
 
-function deleteReply(postIdx, replyIdx) {
+async function deleteReply(postIdx, replyIdx) {
   if (!adminMode) return;
-  forumPosts[postIdx].replies.splice(replyIdx, 1); saveForum(); renderForum();
+  forumPosts[postIdx].replies.splice(replyIdx, 1); renderForum();
+  await saveForumSync();
 }
 
 // ─── BUNDESLÄNDER ─────────────────────────────────────
