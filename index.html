@@ -831,6 +831,22 @@ const INITIAL_DATA = [
 
 // ─── STATE ────────────────────────────────────────────
 let entries = JSON.parse(localStorage.getItem('lk_entries') || 'null') || INITIAL_DATA;
+
+// Migration: fehlende Luxus-Einträge aus INITIAL_DATA nachträglich einfügen
+(function migrateLuxus() {
+  const luxusBase = INITIAL_DATA.filter(e => e.kategorie === 'luxus');
+  let changed = false;
+  luxusBase.forEach(lx => {
+    if (!entries.find(e => e.id === lx.id)) {
+      entries.push({...lx});
+      changed = true;
+    }
+  });
+  // Fehlerhafte "Neuer Luxus-Eintrag" Platzhalter entfernen
+  const before = entries.length;
+  entries = entries.filter(e => !(e.kategorie === 'luxus' && e.name === 'Neuer Luxus-Eintrag'));
+  if (changed || entries.length !== before) save();
+})();
 let activeFilter = '';
 let mapInstance = null;
 let chartInstance = null;
