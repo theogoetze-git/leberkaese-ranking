@@ -288,7 +288,7 @@ select:focus,input:focus{border-color:var(--rot);}
     <button class="admin-btn" id="adminBtn" onclick="toggleAdmin()" title="Admin-Modus">🔒</button>
   </nav>
 </header>
-<div class="admin-banner" id="adminBanner">⚡ Admin-Modus aktiv – Einträge bearbeiten möglich</div>
+<div class="admin-banner" id="adminBanner">⚡ Admin-Modus aktiv – Einträge bearbeiten möglich &nbsp;·&nbsp; <button onclick="setGithubToken()" style="background:none;border:1px solid rgba(74,55,40,0.4);border-radius:6px;padding:0.1rem 0.5rem;font-size:0.72rem;color:var(--braun);cursor:pointer;font-family:inherit;" title="GitHub Token für Foto-Sync">🔑 GitHub Token</button></div>
 
 <main>
 
@@ -868,12 +868,71 @@ let currentEditId = null;
 function save() { localStorage.setItem('lk_entries', JSON.stringify(entries)); }
 
 // ─── PHOTOS ──────────────────────────────────────────
-// Foto wird direkt im Entry-Objekt als photoB64 gespeichert →
-// reist mit save() mit, kein separater localStorage-Eintrag nötig.
+// Committed Repo-Fotos haben Vorrang vor lokalem Base64-Cache.
 function getPhotoSrc(e) {
-  if (e.photoB64) return e.photoB64;          // inline gespeichert
-  if (e.foto)     return 'fotos/' + e.foto;   // committet im Repo
+  if (e.foto)     return 'fotos/' + e.foto;   // committet – auf allen Geräten sichtbar
+  if (e.photoB64) return e.photoB64;          // lokaler Cache (noch nicht committet)
   return null;
+}
+
+// photos.json laden und entry.foto-Felder auf allen Geräten synchronisieren
+async function loadPhotoMap() {
+  try {
+    const resp = await fetch('photos.json?_=' + Date.now());
+    if (!resp.ok) return;
+    const map = await resp.json();
+    let changed = false;
+    entries.forEach(e => {
+      const fn = map[String(e.id)];
+      if (fn && e.foto !== fn) {
+        e.foto = fn;
+        if (e.photoB64) { e.photoB64 = null; } // committed version vorhanden → Cache leeren
+        changed = true;
+      }
+    });
+    if (changed) { save(); renderCards(); renderLuxusCards(); }
+  } catch(err) { /* offline – kein Problem */ }
+}
+loadPhotoMap();
+
+// Foto via GitHub API in Repo committen + photos.json updaten
+async function uploadPhotoToGitHub(b64DataUrl, entryId, entryName) {
+  const token = sessionStorage.getItem('lk_gh_token');
+  if (!token) throw new Error('kein_token');
+
+  const headers = { Authorization: `token ${token}`, 'Content-Type': 'application/json' };
+  const owner = 'theogoetze-git', repo = 'leberkaese-ranking', branch = 'master';
+
+  // Sicherer Dateiname aus Entry-Name ableiten
+  const safeName = entryName.toLowerCase()
+    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  const filename = (safeName || 'foto_' + entryId) + '.jpg';
+  const base64 = b64DataUrl.split(',')[1];
+
+  // 1. Foto-Datei committen
+  const photoUrl = `https://api.github.com/repos/${owner}/${repo}/contents/fotos/${filename}`;
+  let sha = null;
+  try { const r = await fetch(photoUrl, {headers}); if (r.ok) sha = (await r.json()).sha; } catch(e){}
+  const photoBody = { message: `📸 Foto: ${filename}`, content: base64, branch };
+  if (sha) photoBody.sha = sha;
+  const photoResp = await fetch(photoUrl, { method:'PUT', headers, body: JSON.stringify(photoBody) });
+  if (!photoResp.ok) throw new Error(`Upload ${photoResp.status}`);
+
+  // 2. photos.json updaten
+  const mapUrl = `https://api.github.com/repos/${owner}/${repo}/contents/photos.json`;
+  let mapSha = null, currentMap = {};
+  try {
+    const mr = await fetch(mapUrl, {headers});
+    if (mr.ok) { const md = await mr.json(); mapSha = md.sha; currentMap = JSON.parse(atob(md.content.replace(/\n/g,''))); }
+  } catch(e){}
+  currentMap[String(entryId)] = filename;
+  const mapBody = { message: `📸 photos.json aktualisiert`, content: btoa(JSON.stringify(currentMap, null, 2)), branch };
+  if (mapSha) mapBody.sha = mapSha;
+  const mapResp = await fetch(mapUrl, { method:'PUT', headers, body: JSON.stringify(mapBody) });
+  if (!mapResp.ok) throw new Error(`photos.json ${mapResp.status}`);
+
+  return filename;
 }
 
 // Bild komprimieren (max 900px, 75% JPEG)
@@ -914,13 +973,20 @@ function toggleAdmin() {
   if (adminMode) {
     adminMode = false;
     sessionStorage.removeItem('lk_admin');
+    sessionStorage.removeItem('lk_gh_token');
   } else {
     const pin = prompt('Admin-PIN:');
     if (pin === null) return;
     if (pin === ADMIN_PIN) {
       adminMode = true;
       sessionStorage.setItem('lk_admin', '1');
-      showToast('✓ Admin-Modus aktiviert');
+      // GitHub Token für Foto-Upload (optional)
+      if (!sessionStorage.getItem('lk_gh_token')) {
+        const tok = prompt('GitHub Token (für geräteübergreifende Fotos, optional – Enter zum Überspringen):');
+        if (tok && tok.trim()) sessionStorage.setItem('lk_gh_token', tok.trim());
+      }
+      const hasToken = !!sessionStorage.getItem('lk_gh_token');
+      showToast('✓ Admin-Modus ' + (hasToken ? '+ Foto-Sync aktiv' : 'aktiviert'));
     } else {
       showToast('Falscher PIN.'); return;
     }
@@ -929,6 +995,13 @@ function toggleAdmin() {
   renderCards();
   renderLuxusCards();
   renderForum();
+}
+
+function setGithubToken() {
+  const tok = prompt('Neuen GitHub Token eingeben (leer lassen zum Entfernen):');
+  if (tok === null) return;
+  if (tok.trim()) { sessionStorage.setItem('lk_gh_token', tok.trim()); showToast('✓ Token gespeichert'); }
+  else { sessionStorage.removeItem('lk_gh_token'); showToast('Token entfernt'); }
 }
 
 function updateAdminUI() {
@@ -1194,15 +1267,23 @@ async function saveEdit() {
   const fleisch = parseFloat(document.getElementById('e-fleisch').value);
   const hasR = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
 
-  // Foto: gecachtes komprimiertes Bild direkt im Eintrag speichern
+  // Foto verarbeiten
   const fileInput = document.getElementById('e-foto');
   const newPhotoB64 = fileInput._b64 || null;
   fileInput._b64 = null;
 
+  const entryName = document.getElementById('e-name').value.trim() || entries[idx].name;
+
+  // Foto-Update vorbereiten: erst lokal speichern, dann GitHub-Upload versuchen
+  let photoUpdate = {};
+  if (newPhotoB64) {
+    photoUpdate = { photoB64: newPhotoB64 }; // lokaler Fallback sofort sichtbar
+  }
+
   entries[idx] = {
     ...entries[idx],
-    ...(newPhotoB64 ? { photoB64: newPhotoB64 } : {}),
-    name:    document.getElementById('e-name').value.trim() || entries[idx].name,
+    ...photoUpdate,
+    name: entryName,
     bezirk:  document.getElementById('e-bezirk').value.trim(),
     sorte:   document.getElementById('e-sorte').value.split(';').map(s=>s.trim()).filter(Boolean),
     preis:   parseFloat(document.getElementById('e-preis').value) || null,
@@ -1219,7 +1300,24 @@ async function saveEdit() {
   if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
   if (mapInstance) { mapInstance.eachLayer(l=>{if(l instanceof L.Marker)mapInstance.removeLayer(l);}); addMapMarkers(); }
   closeEditModal();
-  showToast('✓ Gespeichert!');
+
+  // GitHub-Upload im Hintergrund (wenn Token vorhanden und neues Foto)
+  if (newPhotoB64 && sessionStorage.getItem('lk_gh_token')) {
+    showToast('📤 Foto wird ins Repo hochgeladen…');
+    uploadPhotoToGitHub(newPhotoB64, id, entryName)
+      .then(filename => {
+        const i = entries.findIndex(x => x.id === id);
+        if (i >= 0) { entries[i].foto = filename; entries[i].photoB64 = null; save(); renderCards(); renderLuxusCards(); }
+        showToast('✅ Foto im Repo gespeichert! Auf allen Geräten sichtbar.');
+      })
+      .catch(err => {
+        if (err.message === 'kein_token') return;
+        showToast('⚠️ GitHub-Upload fehlgeschlagen. Foto nur lokal gespeichert.');
+        console.error('GitHub upload:', err);
+      });
+  } else {
+    showToast('✓ Gespeichert!' + (newPhotoB64 && !sessionStorage.getItem('lk_gh_token') ? ' (Foto nur lokal – Token fehlt)' : ''));
+  }
 }
 
 function deleteEntry() {
@@ -1266,13 +1364,26 @@ async function addEntry() {
     ...(newPhotoB64 ? { photoB64: newPhotoB64 } : {})
   });
   save();
-  ['f-name','f-bezirk','f-preis','f-sorte','f-kruste','f-brot','f-fleisch','f-datum','f-anmerkung'].forEach(id => document.getElementById(id).value='');
+  ['f-name','f-bezirk','f-preis','f-sorte','f-kruste','f-brot','f-fleisch','f-datum','f-anmerkung'].forEach(fid => document.getElementById(fid).value='');
   const fFoto = document.getElementById('f-foto');
   fFoto.value=''; fFoto._b64 = null;
   document.getElementById('f-foto-preview').classList.remove('show');
   buildSortePills(); buildBezirkSelect(); renderCards();
   if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-  showToast('✓ Eintrag gespeichert!');
+
+  // GitHub-Upload im Hintergrund
+  if (newPhotoB64 && sessionStorage.getItem('lk_gh_token')) {
+    showToast('📤 Eintrag gespeichert, Foto wird hochgeladen…');
+    uploadPhotoToGitHub(newPhotoB64, newId, name)
+      .then(filename => {
+        const i = entries.findIndex(x => x.id === newId);
+        if (i >= 0) { entries[i].foto = filename; entries[i].photoB64 = null; save(); renderCards(); }
+        showToast('✅ Foto im Repo gespeichert!');
+      })
+      .catch(() => showToast('⚠️ Upload fehlgeschlagen. Foto nur lokal.'));
+  } else {
+    showToast('✓ Eintrag gespeichert!' + (newPhotoB64 && !sessionStorage.getItem('lk_gh_token') ? ' (Foto lokal – Token für Sync fehlt)' : ''));
+  }
 }
 
 // ─── CSV ──────────────────────────────────────────────
