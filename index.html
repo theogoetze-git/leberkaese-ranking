@@ -335,6 +335,7 @@ select:focus,input:focus{border-color:var(--rot);}
     <button class="btn-primary" onclick="addLuxusEntry()">+ Luxus-Eintrag hinzufügen</button>
   </div>
   <div class="luxus-grid" id="luxusGrid"></div>
+  <div id="luxusWishlist"></div>
 </div>
 
 <!-- FORUM -->
@@ -1384,14 +1385,20 @@ function sendKontakt() {
 
 // ─── LUXUS ────────────────────────────────────────────
 function renderLuxusCards() {
-  const grid = document.getElementById('luxusGrid');
-  const bar  = document.getElementById('luxusAdminBar');
+  const grid     = document.getElementById('luxusGrid');
+  const wishlist = document.getElementById('luxusWishlist');
+  const bar      = document.getElementById('luxusAdminBar');
   if (!grid) return;
   if (bar) bar.style.display = adminMode ? 'block' : 'none';
   grid.innerHTML = '';
-  const luxus = entries.filter(e => e.kategorie === 'luxus')
-    .sort((a,b) => (b.gesamt||0)-(a.gesamt||0) || b.preis-a.preis);
-  luxus.forEach((e, i) => {
+  if (wishlist) wishlist.innerHTML = '';
+
+  const all    = entries.filter(e => e.kategorie === 'luxus');
+  const rated  = all.filter(e => e.gesamt !== null).sort((a,b) => b.gesamt - a.gesamt);
+  const unseen = all.filter(e => e.gesamt === null).sort((a,b) => b.preis - a.preis);
+
+  // ── Bewertete Einträge als dunkle Karten ──────────────
+  rated.forEach((e, i) => {
     const div = document.createElement('div');
     div.className = 'luxus-card';
     const photoSrc = getPhotoSrc(e);
@@ -1399,22 +1406,54 @@ function renderLuxusCards() {
       ${photoSrc ? `<img src="${photoSrc}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:0.6rem;" alt="${e.name}" onerror="this.style.display='none'">` : ''}
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
         <div class="luxus-card-name">${e.name}</div>
-        ${e.gesamt!==null ? `<span style="background:rgba(200,150,26,0.3);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:bold;color:var(--gold-hell);flex-shrink:0;">${i+1}</span>` : ''}
+        <span style="background:rgba(200,150,26,0.3);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:bold;color:var(--gold-hell);flex-shrink:0;">${i+1}</span>
       </div>
       <div class="luxus-card-preis">${e.preis ? e.preis.toFixed(2)+' €' : '– €'}</div>
       ${e.sorte.length ? `<div class="luxus-badge">${e.sorte.join(' · ')}</div>` : ''}
-      ${e.gesamt!==null
-        ? `<div class="luxus-score"><span class="big">${e.gesamt.toFixed(2)}</span><span style="color:#B09060;font-size:0.8rem;">/ 10</span></div>
-           <div style="display:flex;flex-direction:column;gap:0.25rem;margin-top:0.3rem;">
-             ${['Kruste','Brot','Fleisch'].map((l,li)=>{const v=[e.kruste,e.brot,e.fleisch][li];return v!==null?`<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.7rem;color:#9A7840;"><span style="width:40px;">${l}</span><div style="flex:1;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;"><div style="width:${(v/10*100).toFixed(0)}%;height:100%;background:var(--gold-hell);border-radius:2px;"></div></div><span style="width:20px;text-align:right;">${v}</span></div>`:''}).join('')}
-           </div>`
-        : '<div style="font-size:0.75rem;color:#7A6040;font-style:italic;margin-top:0.3rem;">Noch nicht getestet</div>'}
+      <div class="luxus-score"><span class="big">${e.gesamt.toFixed(2)}</span><span style="color:#B09060;font-size:0.8rem;">/ 10</span></div>
+      <div style="display:flex;flex-direction:column;gap:0.25rem;margin-top:0.3rem;">
+        ${['Kruste','Brot','Fleisch'].map((l,li)=>{const v=[e.kruste,e.brot,e.fleisch][li];return v!==null?`<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.7rem;color:#9A7840;"><span style="width:40px;">${l}</span><div style="flex:1;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;"><div style="width:${(v/10*100).toFixed(0)}%;height:100%;background:var(--gold-hell);border-radius:2px;"></div></div><span style="width:20px;text-align:right;">${v}</span></div>`:''}).join('')}
+      </div>
       ${e.anmerkung ? `<div class="luxus-card-detail" style="margin-top:0.4rem;font-style:italic;">${e.anmerkung}</div>` : ''}
       ${e.datum ? `<div style="font-size:0.7rem;color:#6A5030;margin-top:0.2rem;">${formatDatum(e.datum)}</div>` : ''}
       ${adminMode ? `<button class="luxus-edit-btn" style="display:block;" onclick="event.stopPropagation();openEditModal(${e.id})">✏️ Bearbeiten</button>` : ''}`;
     div.onclick = () => openDetailModal(e);
     grid.appendChild(div);
   });
+
+  // ── Wishlist: noch nicht getestete Luxus-LK ───────────
+  if (!wishlist || unseen.length === 0) return;
+  const header = document.createElement('div');
+  header.style.cssText = 'margin:2rem 0 1rem;display:flex;align-items:center;gap:0.8rem;';
+  header.innerHTML = `
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(200,150,26,0.5),transparent);"></div>
+    <span style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.14em;color:#B09060;white-space:nowrap;">✦ Nächste Ziele ✦</span>
+    <div style="flex:1;height:1px;background:linear-gradient(270deg,rgba(200,150,26,0.5),transparent);"></div>`;
+  wishlist.appendChild(header);
+
+  const listWrap = document.createElement('div');
+  listWrap.style.cssText = 'background:linear-gradient(145deg,#1C1408,#150F06);border-radius:var(--radius);overflow:hidden;box-shadow:0 3px 14px rgba(0,0,0,0.3);';
+
+  unseen.forEach((e, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;gap:1rem;padding:0.9rem 1.2rem;cursor:pointer;transition:background 0.15s;${i < unseen.length-1 ? 'border-bottom:1px solid rgba(200,150,26,0.12);' : ''}`;
+    row.onmouseenter = () => row.style.background = 'rgba(200,150,26,0.06)';
+    row.onmouseleave = () => row.style.background = '';
+    row.onclick = () => openDetailModal(e);
+    row.innerHTML = `
+      <div style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(200,150,26,0.3);display:flex;align-items:center;justify-content:center;font-size:0.72rem;color:#B09060;flex-shrink:0;">${i+1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.95rem;font-weight:bold;color:#F0DDA0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.name}</div>
+        <div style="font-size:0.72rem;color:#8A6840;margin-top:0.15rem;">${[...e.sorte, e.anmerkung].filter(Boolean).join(' · ') || 'Premium'}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:1.1rem;font-weight:bold;color:var(--gold-hell);">${e.preis ? e.preis.toFixed(2)+' €' : '–'}</div>
+        <div style="font-size:0.65rem;color:#7A6040;margin-top:0.1rem;">noch offen</div>
+      </div>
+      ${adminMode ? `<button style="background:rgba(200,150,26,0.15);border:1px solid rgba(200,150,26,0.3);color:var(--gold-hell);border-radius:6px;padding:0.25rem 0.5rem;font-size:0.7rem;cursor:pointer;" onclick="event.stopPropagation();openEditModal(${e.id})">✏️</button>` : ''}`;
+    listWrap.appendChild(row);
+  });
+  wishlist.appendChild(listWrap);
 }
 
 function addLuxusEntry() {
