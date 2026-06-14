@@ -1666,7 +1666,12 @@ function sendKontakt() {
     (von?`\n– ${von}`:'')+
     `\n\n(gesendet über die Leberkäse-Ranking App)`
   );
-  window.location.href = `mailto:theo.goetze@gmail.com?subject=${subject}&body=${body}`;
+  const a = document.createElement('a');
+  a.href = `mailto:theo.goetze@gmail.com?subject=${subject}&body=${body}`;
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 // ─── LUXUS ────────────────────────────────────────────
