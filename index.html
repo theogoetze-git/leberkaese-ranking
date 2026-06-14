@@ -342,7 +342,7 @@ select:focus,input:focus{border-color:var(--rot);}
     <button class="tab-btn" onclick="showTab('forum',this)">Forum</button>
     <button class="tab-btn" onclick="showTab('karte',this)">Karte</button>
     <button class="tab-btn" onclick="showTab('chart',this)">Preis-Leistung</button>
-    <button class="tab-btn" onclick="showTab('statistik',this)">📊 Statistik</button>
+    <button class="tab-btn" onclick="showTab('statistik',this)">Leberkäse-Statistik</button>
     <button class="tab-btn" onclick="showTab('ressourcen',this)">Ressourcen</button>
     <button class="tab-btn" onclick="showTab('spendieren',this)">☕ Spendieren</button>
     <button class="tab-btn" onclick="showTab('hinzufuegen',this)" id="addTabBtn">+ Eintrag</button>
@@ -376,8 +376,8 @@ select:focus,input:focus{border-color:var(--rot);}
       <label>Suche</label>
       <input type="text" id="searchInput" placeholder="Name …" oninput="renderCards()">
     </div>
-    <div class="toggle-label">
-      <input type="checkbox" id="nurBewertet" checked onchange="renderCards()">
+    <div class="toggle-label" style="display:none;">
+      <input type="checkbox" id="nurBewertet" onchange="renderCards()">
       Nur bewertete
     </div>
   </div>
@@ -1174,17 +1174,20 @@ function renderCards() {
   grid.innerHTML = '';
   rated.forEach(e => grid.appendChild(makeCard(e, rankMap[e.id])));
 
-  if (!nurBewertet && unrated.length > 0) {
+  if (unrated.length > 0) {
     const div = document.createElement('div');
-    div.className = 'section-title';
-    div.textContent = 'Noch zu testen (' + unrated.length + ')';
+    div.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;gap:0.8rem;margin:0.5rem 0 0.2rem;';
+    div.innerHTML = `
+      <div style="flex:1;height:1px;background:var(--creme-dunkel);"></div>
+      <span style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-weich);white-space:nowrap;">Noch nicht getestet (${unrated.length})</span>
+      <div style="flex:1;height:1px;background:var(--creme-dunkel);"></div>`;
     grid.appendChild(div);
     unrated.sort((a,b) => a.name.localeCompare(b.name));
     unrated.forEach(e => grid.appendChild(makeCardUnrated(e)));
   }
 
   document.getElementById('noResults').style.display =
-    (rated.length === 0 && (nurBewertet || unrated.length === 0)) ? 'block' : 'none';
+    (rated.length === 0 && unrated.length === 0) ? 'block' : 'none';
 }
 
 function makeCard(e, rank) {
@@ -1229,20 +1232,26 @@ function makeCard(e, rank) {
 function makeCardUnrated(e) {
   const div = document.createElement('div');
   div.className = 'card no-rating';
+  div.style.cssText = 'background:#F0EAD8;filter:saturate(0.4);';
+  const photoSrc = getPhotoSrc(e);
   div.innerHTML = `
-    <div class="card-img-placeholder">📍</div>
+    ${photoSrc
+      ? `<img class="card-img" src="${photoSrc}" alt="${e.name}" style="filter:grayscale(0.6);" onerror="this.style.display='none'">`
+      : `<div class="card-img-placeholder" style="font-size:2rem;">📍</div>`}
     <div class="card-body">
       <div class="card-header">
         <div class="card-name">${e.name}</div>
-        <span class="badge-unbewertet">ausstehend</span>
+        <span class="badge-unbewertet" style="font-size:0.65rem;white-space:nowrap;">noch offen</span>
       </div>
       ${e.bezirk?`<div class="card-meta">${e.bezirk}</div>`:''}
-      ${e.anmerkung?`<div class="card-meta" style="font-style:italic;font-size:0.78rem;">${e.anmerkung}</div>`:''}
+      ${(e.sorte||[]).length?`<div class="card-sorte">${e.sorte.map(s=>`<span class="sorte-tag">${s}</span>`).join('')}</div>`:''}
+      ${e.preis?`<div class="card-preis">Preis: <strong>${e.preis.toFixed(2)} €</strong></div>`:''}
+      ${e.anmerkung?`<div class="card-meta" style="font-style:italic;font-size:0.75rem;">${e.anmerkung}</div>`:''}
     </div>
     <div class="edit-overlay ${adminMode?'show':''}">
       <button class="btn-edit-card" onclick="event.stopPropagation();openEditModal(${e.id})">✏️</button>
     </div>`;
-  if (adminMode) div.onclick = () => openEditModal(e.id);
+  div.onclick = () => adminMode ? openEditModal(e.id) : openDetailModal(e);
   return div;
 }
 
