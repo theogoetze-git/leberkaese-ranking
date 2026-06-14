@@ -885,6 +885,7 @@ const INITIAL_DATA = [
   {id:108,name:"Thum Schinken Bio Markt Freyung",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:109,name:"Fleischerei Steirisch Gutmann",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:110,name:"Bar Barbara",bezirk:"1090",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.226,lng:16.358},
+  {id:111,name:"Thum Schinkenmanufaktur am Freyung-Markt",bezirk:"1010",sorte:["Käse","Normal"],preis:5.00,gesamt:7.13,kruste:6,brot:8.2,fleisch:7.2,anmerkung:"Während da Pride schmeckt jeder LK als ob er vo da Stadtmetzg Dornbirn wär. Da Holdersaft um 5€ war o geil.",datum:"13.06.2026",foto:"",lat:48.212,lng:16.364},
   // ── Luxus ──────────────────────────────────────────
   {id:201,name:"Zotter Wien",bezirk:"1010",sorte:["Schokolade"],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"Kilopreis: 80 €",datum:"",foto:"",lat:48.208,lng:16.374,kategorie:"luxus"},
   {id:202,name:"Atelier 7",bezirk:"1070",sorte:["Signature"],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.202,lng:16.356,kategorie:"luxus"},
@@ -910,12 +911,12 @@ let entries = JSON.parse(localStorage.getItem('lk_entries') || 'null') || INITIA
   if (changed) save();
 })();
 
-(function migrateLuxus() {
-  const luxusBase = INITIAL_DATA.filter(e => e.kategorie === 'luxus');
+(function migrateNewEntries() {
+  // Alle INITIAL_DATA-Einträge die noch nicht in entries sind, einfügen
   let changed = false;
-  luxusBase.forEach(lx => {
-    if (!entries.find(e => e.id === lx.id)) {
-      entries.push({...lx});
+  INITIAL_DATA.forEach(init => {
+    if (!entries.find(e => e.id === init.id)) {
+      entries.push({...init});
       changed = true;
     }
   });
