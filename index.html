@@ -342,7 +342,7 @@ select:focus,input:focus{border-color:var(--rot);}
     <button class="tab-btn" onclick="showTab('forum',this)">Forum</button>
     <button class="tab-btn" onclick="showTab('karte',this)">Karte</button>
     <button class="tab-btn" onclick="showTab('chart',this)">Preis-Leistung</button>
-    <button class="tab-btn" onclick="showTab('statistik',this)">Leberkäse-Statistik</button>
+    <button class="tab-btn" onclick="showTab('statistik',this)">Statistik</button>
     <button class="tab-btn" onclick="showTab('ressourcen',this)">Ressourcen</button>
     <button class="tab-btn" onclick="showTab('spendieren',this)">☕ Spendieren</button>
     <button class="tab-btn" onclick="showTab('hinzufuegen',this)" id="addTabBtn">+ Eintrag</button>
@@ -1784,7 +1784,7 @@ function renderStatistik() {
   scores.forEach(s=>{ if(s<4)dist[0]++; else if(s<6)dist[1]++; else if(s<7)dist[2]++; else if(s<8)dist[3]++; else dist[4]++; });
 
   el.innerHTML = `
-  <h2 style="font-size:1.3rem;margin-bottom:1.2rem;font-weight:normal;">📊 Deine Leberkäse-Statistik</h2>
+  <h2 style="font-size:1.3rem;margin-bottom:1.2rem;font-weight:normal;">Statistik</h2>
 
   <div class="stat-grid">
     <div class="stat-card">
