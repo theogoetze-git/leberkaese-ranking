@@ -647,24 +647,24 @@ select:focus,input:focus{border-color:var(--rot);}
     <div class="kontakt-form" id="kontaktForm">
       <div class="form-group">
         <label>Name der Fleischerei / des Lokals *</label>
-        <input type="text" id="k-name" placeholder="z.B. Fleischerei Huber">
+        <input type="text" id="k-name" placeholder="z.B. Fleischerei Huber" oninput="updateKontaktLink()">
       </div>
       <div class="form-row">
         <div class="form-group">
           <label>Bezirk / Ort</label>
-          <input type="text" id="k-ort" placeholder="z.B. 1060 Wien">
+          <input type="text" id="k-ort" placeholder="z.B. 1060 Wien" oninput="updateKontaktLink()">
         </div>
         <div class="form-group">
           <label>Dein Name (optional)</label>
-          <input type="text" id="k-absender" placeholder="z.B. Hannes">
+          <input type="text" id="k-absender" placeholder="z.B. Hannes" oninput="updateKontaktLink()">
         </div>
       </div>
       <div class="form-group">
         <label>Warum sollen wir genau dort hin? 🧱</label>
-        <textarea id="k-text" placeholder="Was macht diesen Leberkäse besonders? Spezielle Sorte? Geheimtipp?"></textarea>
+        <textarea id="k-text" placeholder="Was macht diesen Leberkäse besonders? Spezielle Sorte? Geheimtipp?" oninput="updateKontaktLink()"></textarea>
       </div>
       <div class="btn-row">
-        <button class="btn-primary" onclick="sendKontakt()">Nachricht senden</button>
+        <a id="kontakt-mailto-link" href="mailto:theo.goetze@gmail.com" class="btn-primary" style="display:inline-block;text-align:center;text-decoration:none;">📬 Nachricht senden</a>
       </div>
       <p style="font-size:0.75rem;color:var(--text-weich);margin-top:0.8rem;">Öffnet deine Mail-App mit den vorausgefüllten Daten.</p>
     </div>
@@ -1651,12 +1651,19 @@ function toggleKontaktForm(btn) {
   btn.querySelector('span:first-child').textContent = open ? '✕' : '📬';
 }
 
-function sendKontakt() {
-  const name = document.getElementById('k-name').value.trim();
-  if (!name) { showToast('Bitte Namen der Fleischerei angeben.'); return; }
-  const ort  = document.getElementById('k-ort').value.trim();
-  const von  = document.getElementById('k-absender').value.trim();
-  const text = document.getElementById('k-text').value.trim();
+function updateKontaktLink() {
+  const name = (document.getElementById('k-name')?.value || '').trim();
+  const ort  = (document.getElementById('k-ort')?.value || '').trim();
+  const von  = (document.getElementById('k-absender')?.value || '').trim();
+  const text = (document.getElementById('k-text')?.value || '').trim();
+  const link = document.getElementById('kontakt-mailto-link');
+  if (!link) return;
+  if (!name) {
+    link.href = '#';
+    link.onclick = (e) => { e.preventDefault(); showToast('Bitte Namen der Fleischerei angeben.'); };
+    return;
+  }
+  link.onclick = null;
   const subject = encodeURIComponent(`Leberkäse-Testwunsch: ${name}`);
   const body = encodeURIComponent(
     `Hallo,\n\nich schlage folgende Fleischerei für einen Test vor:\n\n`+
@@ -1666,12 +1673,7 @@ function sendKontakt() {
     (von?`\n– ${von}`:'')+
     `\n\n(gesendet über die Leberkäse-Ranking App)`
   );
-  const a = document.createElement('a');
-  a.href = `mailto:theo.goetze@gmail.com?subject=${subject}&body=${body}`;
-  a.target = '_blank';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  link.href = `mailto:theo.goetze@gmail.com?subject=${subject}&body=${body}`;
 }
 
 // ─── LUXUS ────────────────────────────────────────────
