@@ -930,7 +930,22 @@ window._setEntries = function(fbEntries) {
   // Lokale photoB64-Caches erhalten (nicht in Firebase gespeichert)
   const localB64 = {};
   entries.forEach(e => { if (e.photoB64) localB64[e.id] = e.photoB64; });
-  entries = fbEntries.map(e => localB64[e.id] ? {...e, photoB64: localB64[e.id]} : e);
+  // Firebase speichert keine null-Werte und keine leeren Arrays → Defaults ergänzen
+  entries = fbEntries.map(e => ({
+    sorte: [], foto: '', datum: '', anmerkung: '', bezirk: '',
+    gesamt: null, kruste: null, brot: null, fleisch: null,
+    preis: null, lat: null, lng: null,
+    ...e,
+    gesamt:  e.gesamt  !== undefined ? e.gesamt  : null,
+    kruste:  e.kruste  !== undefined ? e.kruste  : null,
+    brot:    e.brot    !== undefined ? e.brot    : null,
+    fleisch: e.fleisch !== undefined ? e.fleisch : null,
+    preis:   e.preis   !== undefined ? e.preis   : null,
+    lat:     e.lat     !== undefined ? e.lat     : null,
+    lng:     e.lng     !== undefined ? e.lng     : null,
+    sorte:   Array.isArray(e.sorte)  ? e.sorte   : [],
+    ...(localB64[e.id] ? { photoB64: localB64[e.id] } : {})
+  }));
   localStorage.setItem('lk_entries', JSON.stringify(entries));
   // Kein Re-render wenn Edit-Modal offen (würde Formular zurücksetzen)
   if (document.getElementById('editModalOverlay')?.classList.contains('open')) return;
