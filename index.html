@@ -279,13 +279,24 @@ select:focus,input:focus{border-color:var(--rot);}
     const app = initializeApp(firebaseConfig);
     db = getDatabase(app);
 
+    // Live-Listener: Einträge in Echtzeit empfangen
+    onValue(ref(db, 'entries'), snapshot => {
+      const data = snapshot.val();
+      if (data) {
+        const fbEntries = Object.values(data);
+        if (typeof window._setEntries === 'function') window._setEntries(fbEntries);
+      } else {
+        // Firebase leer → lokale Einträge hochladen
+        if (typeof window._initFirebaseEntries === 'function') window._initFirebaseEntries();
+      }
+    });
+
     // Live-Listener: Forum-Posts in Echtzeit empfangen
     onValue(ref(db, 'forum'), snapshot => {
       const data = snapshot.val();
       const posts = data ? Object.entries(data)
         .map(([key, val]) => ({...val, _fbKey: key}))
         .sort((a,b) => (a.ts||0) - (b.ts||0)) : [];
-      // _setForumPosts aktualisiert die lokale Variable + rendert
       if (typeof window._setForumPosts === 'function') window._setForumPosts(posts);
     });
 
@@ -896,7 +907,39 @@ let chartInstance = null;
 let adminMode = sessionStorage.getItem('lk_admin') === '1';
 let currentEditId = null;
 
-function save() { localStorage.setItem('lk_entries', JSON.stringify(entries)); }
+function save() {
+  localStorage.setItem('lk_entries', JSON.stringify(entries));
+  saveEntriesToFirebase();
+}
+
+// Einträge zu Firebase schreiben (photoB64 weglassen – zu groß, kommt via fotos/)
+async function saveEntriesToFirebase() {
+  if (!fbAvailable()) return;
+  const obj = {};
+  entries.forEach(e => {
+    const { photoB64, ...rest } = e; // Base64 nicht in Firebase speichern
+    obj[String(e.id)] = rest;
+  });
+  try { await window._fb.set(window._fb.ref(window._fb.db, 'entries'), obj); }
+  catch(err) { console.error('Firebase entries:', err); }
+}
+
+// Von Firebase-Modul aufgerufen wenn Einträge sich ändern
+window._setEntries = function(fbEntries) {
+  if (!fbEntries || fbEntries.length === 0) return;
+  // Lokale photoB64-Caches erhalten (nicht in Firebase gespeichert)
+  const localB64 = {};
+  entries.forEach(e => { if (e.photoB64) localB64[e.id] = e.photoB64; });
+  entries = fbEntries.map(e => localB64[e.id] ? {...e, photoB64: localB64[e.id]} : e);
+  localStorage.setItem('lk_entries', JSON.stringify(entries));
+  // Kein Re-render wenn Edit-Modal offen (würde Formular zurücksetzen)
+  if (document.getElementById('editModalOverlay')?.classList.contains('open')) return;
+  buildSortePills(); buildBezirkSelect(); renderCards(); renderLuxusCards();
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+};
+
+// Beim ersten Verbinden: lokale Einträge in Firebase hochladen
+window._initFirebaseEntries = function() { saveEntriesToFirebase(); };
 
 // ─── PHOTOS ──────────────────────────────────────────
 // Committed Repo-Fotos haben Vorrang vor lokalem Base64-Cache.
