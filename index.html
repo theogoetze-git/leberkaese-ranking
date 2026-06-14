@@ -445,7 +445,7 @@ select:focus,input:focus{border-color:var(--rot);}
       <div class="form-row">
         <div class="form-group">
           <label>Bundesland *</label>
-          <select id="bl-bundesland">
+          <select id="bl-bundesland" onchange="toggleAuslandField()">
             <option value="">– bitte wählen –</option>
             <option>Burgenland</option>
             <option>Kärnten</option>
@@ -455,16 +455,22 @@ select:focus,input:focus{border-color:var(--rot);}
             <option>Steiermark</option>
             <option>Tirol</option>
             <option>Vorarlberg</option>
+            <option>Südtirol</option>
+            <option value="Ausland">Ausland</option>
           </select>
         </div>
         <div class="form-group">
           <label>Ort</label>
-          <input type="text" id="bl-ort" placeholder="z.B. Graz">
+          <input type="text" id="bl-ort" placeholder="z.B. Dornbirn">
         </div>
+      </div>
+      <div class="form-group" id="bl-ausland-wrap" style="display:none;">
+        <label>Land *</label>
+        <input type="text" id="bl-ausland" placeholder="z.B. Deutschland, Schweiz …">
       </div>
       <div class="form-group">
         <label>Name der Fleischerei / des Lokals *</label>
-        <input type="text" id="bl-name" placeholder="z.B. Fleischerei Huber">
+        <input type="text" id="bl-name" placeholder="z.B. Stadtmetzg Dornbirn">
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -507,7 +513,7 @@ select:focus,input:focus{border-color:var(--rot);}
       </div>
       <div class="form-group">
         <label>Dein Name (optional)</label>
-        <input type="text" id="bl-autor" placeholder="z.B. Maria">
+        <input type="text" id="bl-autor" placeholder="z.B. Sepp Täglich">
       </div>
       <div class="btn-row">
         <button class="btn-primary" onclick="addBLEntry()">Eintrag speichern</button>
@@ -2106,10 +2112,18 @@ function makeBLCard(e, rank) {
   return div;
 }
 
+function toggleAuslandField() {
+  const val = document.getElementById('bl-bundesland').value;
+  document.getElementById('bl-ausland-wrap').style.display = val === 'Ausland' ? 'block' : 'none';
+}
+
 async function addBLEntry() {
-  const bundesland = document.getElementById('bl-bundesland').value;
+  const blSelect = document.getElementById('bl-bundesland').value;
+  const ausland  = document.getElementById('bl-ausland')?.value.trim();
+  const bundesland = blSelect === 'Ausland' ? (ausland || 'Ausland') : blSelect;
   const name = document.getElementById('bl-name').value.trim();
-  if (!bundesland) { showToast('Bitte Bundesland wählen.'); return; }
+  if (!blSelect) { showToast('Bitte Bundesland wählen.'); return; }
+  if (blSelect === 'Ausland' && !ausland) { showToast('Bitte Land eingeben.'); return; }
   if (!name) { showToast('Name ist erforderlich.'); return; }
 
   const kruste = parseFloat(document.getElementById('bl-kruste').value);
@@ -2139,6 +2153,8 @@ async function addBLEntry() {
   saveBL();
   ['bl-name','bl-ort','bl-sorte','bl-preis','bl-kruste','bl-brot','bl-fleisch','bl-datum','bl-anmerkung','bl-autor'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('bl-bundesland').value='';
+  if (document.getElementById('bl-ausland')) document.getElementById('bl-ausland').value='';
+  document.getElementById('bl-ausland-wrap').style.display='none';
   document.getElementById('bl-foto').value='';
   document.getElementById('bl-foto-preview').classList.remove('show');
   showToast('✓ Eintrag gespeichert!');
