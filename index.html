@@ -647,26 +647,25 @@ select:focus,input:focus{border-color:var(--rot);}
     <div class="kontakt-form" id="kontaktForm">
       <div class="form-group">
         <label>Name der Fleischerei / des Lokals *</label>
-        <input type="text" id="k-name" placeholder="z.B. Fleischerei Huber" oninput="updateKontaktLink()">
+        <input type="text" id="k-name" placeholder="z.B. Fleischerei Huber">
       </div>
       <div class="form-row">
         <div class="form-group">
           <label>Bezirk / Ort</label>
-          <input type="text" id="k-ort" placeholder="z.B. 1060 Wien" oninput="updateKontaktLink()">
+          <input type="text" id="k-ort" placeholder="z.B. 1060 Wien">
         </div>
         <div class="form-group">
           <label>Dein Name (optional)</label>
-          <input type="text" id="k-absender" placeholder="z.B. Hannes" oninput="updateKontaktLink()">
+          <input type="text" id="k-absender" placeholder="z.B. Hannes">
         </div>
       </div>
       <div class="form-group">
         <label>Warum sollen wir genau dort hin? 🧱</label>
-        <textarea id="k-text" placeholder="Was macht diesen Leberkäse besonders? Spezielle Sorte? Geheimtipp?" oninput="updateKontaktLink()"></textarea>
+        <textarea id="k-text" placeholder="Was macht diesen Leberkäse besonders? Spezielle Sorte? Geheimtipp?"></textarea>
       </div>
       <div class="btn-row">
-        <a id="kontakt-mailto-link" href="mailto:theo.goetze@gmail.com" class="btn-primary" style="display:inline-block;text-align:center;text-decoration:none;">📬 Nachricht senden</a>
+        <button class="btn-primary" onclick="sendKontakt()">📬 Nachricht senden</button>
       </div>
-      <p style="font-size:0.75rem;color:var(--text-weich);margin-top:0.8rem;">Öffnet deine Mail-App mit den vorausgefüllten Daten.</p>
     </div>
   </div>
 
@@ -1651,29 +1650,43 @@ function toggleKontaktForm(btn) {
   btn.querySelector('span:first-child').textContent = open ? '✕' : '📬';
 }
 
-function updateKontaktLink() {
+async function sendKontakt() {
   const name = (document.getElementById('k-name')?.value || '').trim();
+  if (!name) { showToast('Bitte Namen der Fleischerei angeben.'); return; }
   const ort  = (document.getElementById('k-ort')?.value || '').trim();
   const von  = (document.getElementById('k-absender')?.value || '').trim();
   const text = (document.getElementById('k-text')?.value || '').trim();
-  const link = document.getElementById('kontakt-mailto-link');
-  if (!link) return;
-  if (!name) {
-    link.href = '#';
-    link.onclick = (e) => { e.preventDefault(); showToast('Bitte Namen der Fleischerei angeben.'); };
-    return;
+
+  const btn = document.querySelector('#kontaktForm .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Wird gesendet…'; }
+
+  try {
+    const resp = await fetch('https://formspree.io/f/xnjylzjz', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fleischerei: name,
+        ort: ort || '–',
+        absender: von || 'anonym',
+        nachricht: text || '–',
+        _subject: `Leberkäse-Testwunsch: ${name}`
+      })
+    });
+    if (resp.ok) {
+      showToast('✅ Danke! Nachricht wurde gesendet.');
+      document.getElementById('k-name').value = '';
+      document.getElementById('k-ort').value = '';
+      document.getElementById('k-absender').value = '';
+      document.getElementById('k-text').value = '';
+      document.getElementById('kontaktForm').classList.remove('open');
+    } else {
+      showToast('❌ Fehler beim Senden – bitte nochmal versuchen.');
+    }
+  } catch(e) {
+    showToast('❌ Keine Verbindung – bitte nochmal versuchen.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📬 Nachricht senden'; }
   }
-  link.onclick = null;
-  const subject = encodeURIComponent(`Leberkäse-Testwunsch: ${name}`);
-  const body = encodeURIComponent(
-    `Hallo,\n\nich schlage folgende Fleischerei für einen Test vor:\n\n`+
-    `📍 Name: ${name}\n`+
-    (ort?`📌 Ort: ${ort}\n`:'')+
-    (text?`\n💬 Warum: ${text}\n`:'')+
-    (von?`\n– ${von}`:'')+
-    `\n\n(gesendet über die Leberkäse-Ranking App)`
-  );
-  link.href = `mailto:theo.goetze@gmail.com?subject=${subject}&body=${body}`;
 }
 
 // ─── LUXUS ────────────────────────────────────────────
