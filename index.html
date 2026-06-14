@@ -947,14 +947,9 @@ async function saveEntriesToFirebase() {
   catch(err) { console.error('Firebase entries:', err); }
 }
 
-// Von Firebase-Modul aufgerufen wenn Einträge sich ändern
-window._setEntries = function(fbEntries) {
-  if (!fbEntries || fbEntries.length === 0) return;
-  // Lokale photoB64-Caches erhalten (nicht in Firebase gespeichert)
-  const localB64 = {};
-  entries.forEach(e => { if (e.photoB64) localB64[e.id] = e.photoB64; });
-  // Firebase speichert keine null-Werte und keine leeren Arrays → Defaults ergänzen
-  entries = fbEntries.map(e => ({
+// Hilfsfunktion: Firebase-Eintrag normalisieren (null-Werte + leere Arrays wiederherstellen)
+function normalizeEntry(e) {
+  return {
     sorte: [], foto: '', datum: '', anmerkung: '', bezirk: '',
     gesamt: null, kruste: null, brot: null, fleisch: null,
     preis: null, lat: null, lng: null,
@@ -967,8 +962,40 @@ window._setEntries = function(fbEntries) {
     lat:     e.lat     !== undefined ? e.lat     : null,
     lng:     e.lng     !== undefined ? e.lng     : null,
     sorte:   Array.isArray(e.sorte)  ? e.sorte   : [],
-    ...(localB64[e.id] ? { photoB64: localB64[e.id] } : {})
-  }));
+  };
+}
+
+// Von Firebase-Modul aufgerufen wenn Einträge sich ändern
+window._setEntries = function(fbEntries) {
+  if (!fbEntries || fbEntries.length === 0) return;
+  // Lokale photoB64-Caches erhalten (nicht in Firebase gespeichert)
+  const localB64 = {};
+  entries.forEach(e => { if (e.photoB64) localB64[e.id] = e.photoB64; });
+
+  // Firebase-IDs sammeln
+  const fbIds = new Set(fbEntries.map(e => e.id));
+
+  // Einträge die nur lokal existieren (noch nicht in Firebase) behalten
+  const localOnly = entries.filter(e => !fbIds.has(e.id));
+
+  // Mergen: Firebase-Daten + lokale Einträge die Firebase noch nicht kennt
+  const merged = [
+    ...fbEntries.map(e => ({
+      ...normalizeEntry(e),
+      ...(localB64[e.id] ? { photoB64: localB64[e.id] } : {})
+    })),
+    ...localOnly
+  ];
+
+  // Lokale Einträge die Firebase fehlen → nachsynchronisieren
+  if (localOnly.length > 0) {
+    console.log('Firebase fehlen', localOnly.length, 'lokale Einträge – wird nachgepusht');
+    entries = merged;
+    saveEntriesToFirebase();
+  } else {
+    entries = merged;
+  }
+
   localStorage.setItem('lk_entries', JSON.stringify(entries));
   // Kein Re-render wenn Edit-Modal offen (würde Formular zurücksetzen)
   if (document.getElementById('editModalOverlay')?.classList.contains('open')) return;
