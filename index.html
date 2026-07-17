@@ -953,13 +953,18 @@ function save() {
   saveEntriesToFirebase();
 }
 
-// Einträge zu Firebase schreiben (photoB64 weglassen – zu groß, kommt via fotos/)
+// Einträge zu Firebase schreiben (inkl. photoB64, damit Fotos ohne GitHub-Token syncen)
+// Sobald ein Foto via GitHub committet ist (e.foto gesetzt), wird photoB64 weggelassen – hält Firebase leicht.
 async function saveEntriesToFirebase() {
   if (!fbAvailable()) return;
   const obj = {};
   entries.forEach(e => {
-    const { photoB64, ...rest } = e; // Base64 nicht in Firebase speichern
-    obj[String(e.id)] = rest;
+    if (e.foto) {
+      const { photoB64, ...rest } = e; // schon im Repo → Base64 nicht nötig
+      obj[String(e.id)] = rest;
+    } else {
+      obj[String(e.id)] = e; // noch nicht committet → Foto als Base64 mitsyncen
+    }
   });
   try { await window._fb.set(window._fb.ref(window._fb.db, 'entries'), obj); }
   catch(err) { console.error('Firebase entries:', err); }
@@ -2096,7 +2101,7 @@ function saveBL() {
   saveBLToFirebase();
 }
 
-// BL-Einträge zu Firebase schreiben (Foto bleibt lokal – separater localStorage-Key)
+// BL-Einträge zu Firebase schreiben (inkl. Foto als photoB64 – geräteübergreifend)
 async function saveBLToFirebase() {
   if (!fbAvailable()) return;
   const obj = {};
@@ -2108,7 +2113,7 @@ async function saveBLToFirebase() {
 // Firebase-BL-Eintrag normalisieren (null-Werte + leere Arrays wiederherstellen)
 function normalizeBLEntry(e) {
   return {
-    sorte: [], foto: '', datum: '', anmerkung: '', bundesland: '', ort: '', autor: '', bezirk: '',
+    sorte: [], foto: '', photoB64: '', datum: '', anmerkung: '', bundesland: '', ort: '', autor: '', bezirk: '',
     gesamt: null, kruste: null, brot: null, fleisch: null, preis: null, lat: null, lng: null,
     ...e,
     gesamt:  e.gesamt  !== undefined ? e.gesamt  : null,
@@ -2125,22 +2130,44 @@ function normalizeBLEntry(e) {
 // Von Firebase-Modul aufgerufen wenn BL-Einträge sich ändern
 window._setBLEntries = function(fbBL) {
   if (!fbBL || fbBL.length === 0) return;
+  // Lokale Foto-Caches sichern, damit sie nicht von Firebase überschrieben werden
+  const localB64 = {};
+  blEntries.forEach(e => { if (e.photoB64) localB64[e.id] = e.photoB64; });
+
   const fbIds = new Set(fbBL.map(e => e.id));
   const localOnly = blEntries.filter(e => !fbIds.has(e.id));
-  const merged = [ ...fbBL.map(normalizeBLEntry), ...localOnly ];
+  const merged = [
+    ...fbBL.map(e => {
+      const n = normalizeBLEntry(e);
+      if (!n.photoB64 && localB64[e.id]) n.photoB64 = localB64[e.id];
+      return n;
+    }),
+    ...localOnly
+  ];
 
-  if (localOnly.length > 0) {
-    blEntries = merged;
-    saveBLToFirebase();
-  } else {
-    blEntries = merged;
-  }
+  // Nachpushen, wenn Firebase lokale Einträge oder lokale Fotos fehlen
+  const needsPush = localOnly.length > 0 || fbBL.some(e => !e.photoB64 && localB64[e.id]);
+  blEntries = merged;
+  if (needsPush) saveBLToFirebase();
+
   localStorage.setItem('lk_bl_entries', JSON.stringify(blEntries));
   if (document.getElementById('bl-liste')?.style.display !== 'none') renderBLCards();
 };
 
 // Beim ersten Verbinden: lokale BL-Einträge in Firebase hochladen
 window._initFirebaseBL = function() { saveBLToFirebase(); };
+
+// Migration: bestehende BL-Fotos aus separatem localStorage in den Eintrag holen (damit sie syncen)
+(function migrateBLPhotos() {
+  let changed = false;
+  blEntries.forEach(e => {
+    if (!e.photoB64 && !e.foto) {
+      const local = localStorage.getItem('lk_photo_bl_' + e.id);
+      if (local) { e.photoB64 = local; changed = true; }
+    }
+  });
+  if (changed) saveBL();
+})();
 
 function blShowTab(name, btn) {
   document.getElementById('bl-liste').style.display = name==='liste' ? 'block' : 'none';
@@ -2165,7 +2192,7 @@ function makeBLCard(e, rank) {
   div.className = 'card';
   div.onclick = () => openDetailModal(e);
 
-  const photoSrc = localStorage.getItem('lk_photo_bl_' + e.id) || null;
+  const photoSrc = getPhotoSrc(e) || localStorage.getItem('lk_photo_bl_' + e.id) || null;
   const imgHtml = photoSrc ? `<img class="card-img" src="${photoSrc}" alt="${e.name}" loading="lazy">` : '';
   const placeholder = `<div class="card-img-placeholder" ${photoSrc?'style="display:none"':''}>🏔️</div>`;
   const rankClass = rank===1?'gold':rank===2?'silver':rank===3?'bronze':'';
@@ -2214,9 +2241,9 @@ async function addBLEntry() {
   const newId = Date.now();
 
   const fileInput = document.getElementById('bl-foto');
+  let photoB64 = '';
   if (fileInput.files[0]) {
-    const b64 = await readFileAsB64(fileInput.files[0]);
-    localStorage.setItem('lk_photo_bl_' + newId, b64);
+    photoB64 = await readFileAsB64(fileInput.files[0]);
   }
 
   blEntries.push({
@@ -2229,7 +2256,7 @@ async function addBLEntry() {
     anmerkung: document.getElementById('bl-anmerkung').value.trim(),
     datum: document.getElementById('bl-datum').value || '',
     autor: document.getElementById('bl-autor').value.trim(),
-    lat: null, lng: null, foto: '', bezirk: bundesland
+    lat: null, lng: null, foto: '', photoB64, bezirk: bundesland
   });
   saveBL();
   ['bl-name','bl-ort','bl-sorte','bl-preis','bl-kruste','bl-brot','bl-fleisch','bl-datum','bl-anmerkung','bl-autor'].forEach(id=>document.getElementById(id).value='');
