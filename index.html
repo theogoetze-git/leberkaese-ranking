@@ -309,6 +309,18 @@ select:focus,input:focus{border-color:var(--rot);}
       }
     });
 
+    // Live-Listener: Bundesländer-Einträge in Echtzeit empfangen
+    onValue(ref(db, 'blEntries'), snapshot => {
+      const data = snapshot.val();
+      if (data) {
+        const fbBL = Object.values(data);
+        if (typeof window._setBLEntries === 'function') window._setBLEntries(fbBL);
+      } else {
+        // Firebase leer → lokale BL-Einträge hochladen
+        if (typeof window._initFirebaseBL === 'function') window._initFirebaseBL();
+      }
+    });
+
     // Live-Listener: Forum-Posts in Echtzeit empfangen
     onValue(ref(db, 'forum'), snapshot => {
       const data = snapshot.val();
@@ -2079,7 +2091,56 @@ async function deleteReply(postIdx, replyIdx) {
 // ─── BUNDESLÄNDER ─────────────────────────────────────
 let blEntries = JSON.parse(localStorage.getItem('lk_bl_entries') || '[]');
 
-function saveBL() { localStorage.setItem('lk_bl_entries', JSON.stringify(blEntries)); }
+function saveBL() {
+  localStorage.setItem('lk_bl_entries', JSON.stringify(blEntries));
+  saveBLToFirebase();
+}
+
+// BL-Einträge zu Firebase schreiben (Foto bleibt lokal – separater localStorage-Key)
+async function saveBLToFirebase() {
+  if (!fbAvailable()) return;
+  const obj = {};
+  blEntries.forEach(e => { obj[String(e.id)] = e; });
+  try { await window._fb.set(window._fb.ref(window._fb.db, 'blEntries'), obj); }
+  catch(err) { console.error('Firebase blEntries:', err); }
+}
+
+// Firebase-BL-Eintrag normalisieren (null-Werte + leere Arrays wiederherstellen)
+function normalizeBLEntry(e) {
+  return {
+    sorte: [], foto: '', datum: '', anmerkung: '', bundesland: '', ort: '', autor: '', bezirk: '',
+    gesamt: null, kruste: null, brot: null, fleisch: null, preis: null, lat: null, lng: null,
+    ...e,
+    gesamt:  e.gesamt  !== undefined ? e.gesamt  : null,
+    kruste:  e.kruste  !== undefined ? e.kruste  : null,
+    brot:    e.brot    !== undefined ? e.brot    : null,
+    fleisch: e.fleisch !== undefined ? e.fleisch : null,
+    preis:   e.preis   !== undefined ? e.preis   : null,
+    lat:     e.lat     !== undefined ? e.lat     : null,
+    lng:     e.lng     !== undefined ? e.lng     : null,
+    sorte:   Array.isArray(e.sorte)  ? e.sorte   : [],
+  };
+}
+
+// Von Firebase-Modul aufgerufen wenn BL-Einträge sich ändern
+window._setBLEntries = function(fbBL) {
+  if (!fbBL || fbBL.length === 0) return;
+  const fbIds = new Set(fbBL.map(e => e.id));
+  const localOnly = blEntries.filter(e => !fbIds.has(e.id));
+  const merged = [ ...fbBL.map(normalizeBLEntry), ...localOnly ];
+
+  if (localOnly.length > 0) {
+    blEntries = merged;
+    saveBLToFirebase();
+  } else {
+    blEntries = merged;
+  }
+  localStorage.setItem('lk_bl_entries', JSON.stringify(blEntries));
+  if (document.getElementById('bl-liste')?.style.display !== 'none') renderBLCards();
+};
+
+// Beim ersten Verbinden: lokale BL-Einträge in Firebase hochladen
+window._initFirebaseBL = function() { saveBLToFirebase(); };
 
 function blShowTab(name, btn) {
   document.getElementById('bl-liste').style.display = name==='liste' ? 'block' : 'none';
