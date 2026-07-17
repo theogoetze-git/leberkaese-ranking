@@ -2097,6 +2097,15 @@ async function deleteReply(postIdx, replyIdx) {
 // ─── BUNDESLÄNDER ─────────────────────────────────────
 let blEntries = JSON.parse(localStorage.getItem('lk_bl_entries') || '[]');
 
+// IDs, die schon mind. einmal in Firebase bestätigt waren.
+// Damit lässt sich "noch nie synchronisiert" (→ hochladen) von "woanders gelöscht" (→ entfernen) unterscheiden.
+let blSynced = new Set(JSON.parse(localStorage.getItem('lk_bl_synced') || '[]'));
+function markBLSynced(ids) {
+  let changed = false;
+  ids.forEach(id => { if (!blSynced.has(id)) { blSynced.add(id); changed = true; } });
+  if (changed) localStorage.setItem('lk_bl_synced', JSON.stringify([...blSynced]));
+}
+
 function saveBL() {
   localStorage.setItem('lk_bl_entries', JSON.stringify(blEntries));
   saveBLToFirebase();
@@ -2136,21 +2145,26 @@ window._setBLEntries = function(fbBL) {
   blEntries.forEach(e => { if (e.photoB64) localB64[e.id] = e.photoB64; });
 
   const fbIds = new Set(fbBL.map(e => e.id));
-  // Nur GANZ frisch erstellte lokale Einträge behalten (Race-Schutz beim Anlegen).
-  // Ältere lokale Einträge, die Firebase nicht (mehr) kennt, wurden woanders gelöscht → nicht wiederherstellen.
-  const now = Date.now();
-  const recentLocalOnly = blEntries.filter(e => !fbIds.has(e.id) && (now - e.id) < 60000);
+  markBLSynced([...fbIds]);
+
+  // Lokale Einträge, die Firebase nicht kennt, in zwei Gruppen teilen:
+  const localOnly = blEntries.filter(e => !fbIds.has(e.id));
+  const neverSynced      = localOnly.filter(e => !blSynced.has(e.id)); // noch nie hochgeladen → behalten & pushen
+  const deletedElsewhere = localOnly.filter(e =>  blSynced.has(e.id)); // woanders gelöscht → entfernen
+  deletedElsewhere.forEach(e => { blSynced.delete(e.id); localStorage.removeItem('lk_photo_bl_' + e.id); });
+  if (deletedElsewhere.length) localStorage.setItem('lk_bl_synced', JSON.stringify([...blSynced]));
+
   const merged = [
     ...fbBL.map(e => {
       const n = normalizeBLEntry(e);
       if (!n.photoB64 && localB64[e.id]) n.photoB64 = localB64[e.id];
       return n;
     }),
-    ...recentLocalOnly
+    ...neverSynced
   ];
 
-  // Nachpushen, wenn Firebase frische lokale Einträge oder lokale Fotos fehlen
-  const needsPush = recentLocalOnly.length > 0 || fbBL.some(e => !e.photoB64 && localB64[e.id]);
+  // Nachpushen, wenn Firebase noch-nie-synchronisierte Einträge oder lokale Fotos fehlen
+  const needsPush = neverSynced.length > 0 || fbBL.some(e => !e.photoB64 && localB64[e.id]);
   blEntries = merged;
   if (needsPush) saveBLToFirebase();
 
@@ -2276,6 +2290,8 @@ async function addBLEntry() {
 function deleteBLEntry(id) {
   if (!adminMode || !confirm('Eintrag löschen?')) return;
   localStorage.removeItem('lk_photo_bl_' + id);
+  blSynced.delete(id);
+  localStorage.setItem('lk_bl_synced', JSON.stringify([...blSynced]));
   blEntries = blEntries.filter(e => e.id !== id);
   saveBL(); renderBLCards();
   showToast('Gelöscht.');
