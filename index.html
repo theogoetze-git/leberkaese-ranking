@@ -1157,6 +1157,7 @@ function toggleAdmin() {
   renderCards();
   renderLuxusCards();
   renderForum();
+  renderBLCards();
 }
 
 function setGithubToken() {
@@ -2129,24 +2130,27 @@ function normalizeBLEntry(e) {
 
 // Von Firebase-Modul aufgerufen wenn BL-Einträge sich ändern
 window._setBLEntries = function(fbBL) {
-  if (!fbBL || fbBL.length === 0) return;
+  if (!fbBL) return;
   // Lokale Foto-Caches sichern, damit sie nicht von Firebase überschrieben werden
   const localB64 = {};
   blEntries.forEach(e => { if (e.photoB64) localB64[e.id] = e.photoB64; });
 
   const fbIds = new Set(fbBL.map(e => e.id));
-  const localOnly = blEntries.filter(e => !fbIds.has(e.id));
+  // Nur GANZ frisch erstellte lokale Einträge behalten (Race-Schutz beim Anlegen).
+  // Ältere lokale Einträge, die Firebase nicht (mehr) kennt, wurden woanders gelöscht → nicht wiederherstellen.
+  const now = Date.now();
+  const recentLocalOnly = blEntries.filter(e => !fbIds.has(e.id) && (now - e.id) < 60000);
   const merged = [
     ...fbBL.map(e => {
       const n = normalizeBLEntry(e);
       if (!n.photoB64 && localB64[e.id]) n.photoB64 = localB64[e.id];
       return n;
     }),
-    ...localOnly
+    ...recentLocalOnly
   ];
 
-  // Nachpushen, wenn Firebase lokale Einträge oder lokale Fotos fehlen
-  const needsPush = localOnly.length > 0 || fbBL.some(e => !e.photoB64 && localB64[e.id]);
+  // Nachpushen, wenn Firebase frische lokale Einträge oder lokale Fotos fehlen
+  const needsPush = recentLocalOnly.length > 0 || fbBL.some(e => !e.photoB64 && localB64[e.id]);
   blEntries = merged;
   if (needsPush) saveBLToFirebase();
 
