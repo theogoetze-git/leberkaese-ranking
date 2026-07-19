@@ -491,23 +491,23 @@ select:focus,input:focus{border-color:var(--rot);}
         </div>
         <div class="form-group">
           <label>Preis (€)</label>
-          <input type="number" id="bl-preis" step="0.10" min="0" placeholder="3.50">
+          <input type="text" inputmode="decimal" id="bl-preis" placeholder="3.50">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label>Kruste (0–10)</label>
-          <input type="number" id="bl-kruste" step="0.1" min="0" max="10">
+          <input type="text" inputmode="decimal" id="bl-kruste" placeholder="z.B. 6.7">
         </div>
         <div class="form-group">
           <label>Brot (0–10)</label>
-          <input type="number" id="bl-brot" step="0.1" min="0" max="10">
+          <input type="text" inputmode="decimal" id="bl-brot" placeholder="z.B. 6.7">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label>Fleisch (0–10)</label>
-          <input type="number" id="bl-fleisch" step="0.1" min="0" max="10">
+          <input type="text" inputmode="decimal" id="bl-fleisch" placeholder="z.B. 6.7">
         </div>
         <div class="form-group">
           <label>Datum</label>
@@ -712,7 +712,7 @@ select:focus,input:focus{border-color:var(--rot);}
           </div>
           <div class="form-group">
             <label>Preis (€)</label>
-            <input type="number" id="f-preis" step="0.10" min="0" placeholder="3.50">
+            <input type="text" inputmode="decimal" id="f-preis" placeholder="3.50">
           </div>
         </div>
         <div class="form-group">
@@ -722,17 +722,17 @@ select:focus,input:focus{border-color:var(--rot);}
         <div class="form-row">
           <div class="form-group">
             <label>Kruste (0–10)</label>
-            <input type="number" id="f-kruste" step="0.1" min="0" max="10">
+            <input type="text" inputmode="decimal" id="f-kruste" placeholder="z.B. 6.7">
           </div>
           <div class="form-group">
             <label>Brot (0–10)</label>
-            <input type="number" id="f-brot" step="0.1" min="0" max="10">
+            <input type="text" inputmode="decimal" id="f-brot" placeholder="z.B. 6.7">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Fleisch (0–10)</label>
-            <input type="number" id="f-fleisch" step="0.1" min="0" max="10">
+            <input type="text" inputmode="decimal" id="f-fleisch" placeholder="z.B. 6.7">
           </div>
           <div class="form-group">
             <label>Datum</label>
@@ -815,7 +815,7 @@ select:focus,input:focus{border-color:var(--rot);}
         </div>
         <div class="form-group">
           <label>Preis (€)</label>
-          <input type="number" id="e-preis" step="0.10" min="0">
+          <input type="text" inputmode="decimal" id="e-preis" placeholder="3.50">
         </div>
       </div>
       <div class="form-group">
@@ -825,17 +825,17 @@ select:focus,input:focus{border-color:var(--rot);}
       <div class="form-row">
         <div class="form-group">
           <label>Kruste (0–10)</label>
-          <input type="number" id="e-kruste" step="0.1" min="0" max="10">
+          <input type="text" inputmode="decimal" id="e-kruste" placeholder="z.B. 6.7">
         </div>
         <div class="form-group">
           <label>Brot (0–10)</label>
-          <input type="number" id="e-brot" step="0.1" min="0" max="10">
+          <input type="text" inputmode="decimal" id="e-brot" placeholder="z.B. 6.7">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label>Fleisch (0–10)</label>
-          <input type="number" id="e-fleisch" step="0.1" min="0" max="10">
+          <input type="text" inputmode="decimal" id="e-fleisch" placeholder="z.B. 6.7">
         </div>
         <div class="form-group">
           <label>Datum</label>
@@ -947,6 +947,13 @@ let mapInstance = null;
 let chartInstance = null;
 let adminMode = sessionStorage.getItem('lk_admin') === '1';
 let currentEditId = null;
+
+// Dezimal-Eingabe robust auslesen: akzeptiert Punkt UND Komma (z.B. "6.7" oder "6,7")
+function numFromId(id) {
+  const raw = (document.getElementById(id)?.value || '').trim().replace(',', '.');
+  const n = parseFloat(raw);
+  return isNaN(n) ? NaN : n;
+}
 
 function save() {
   localStorage.setItem('lk_entries', JSON.stringify(entries));
@@ -1206,7 +1213,11 @@ function renderCards() {
 
   if (bezirk) { rated = rated.filter(e => e.bezirk === bezirk); unrated = unrated.filter(e => e.bezirk === bezirk); }
   if (search) { rated = rated.filter(e => e.name.toLowerCase().includes(search)); unrated = unrated.filter(e => e.name.toLowerCase().includes(search)); }
-  if (activeFilter) rated = rated.filter(e => e.sorte.some(s => s.toLowerCase().includes(activeFilter.toLowerCase())));
+  if (activeFilter) {
+    const af = activeFilter.toLowerCase();
+    rated   = rated.filter(e => e.sorte.some(s => s.toLowerCase() === af));
+    unrated = unrated.filter(e => e.sorte.some(s => s.toLowerCase() === af));
+  }
 
   const sortFns = {
     gesamt: (a,b) => b.gesamt - a.gesamt,
@@ -1330,7 +1341,8 @@ function formatDatum(d) {
 // ─── PILLS & SELECTS ──────────────────────────────────
 function buildSortePills() {
   const allSorten = new Set();
-  entries.forEach(e => e.sorte.forEach(s => allSorten.add(s)));
+  // Nur Sorten aus Rangliste-Einträgen (kein Luxus) – sonst gäbe es Pills ohne Treffer
+  entries.filter(e => e.kategorie !== 'luxus').forEach(e => e.sorte.forEach(s => allSorten.add(s)));
   const container = document.getElementById('sortePills');
   container.innerHTML = '';
   const all = document.createElement('span');
@@ -1435,9 +1447,9 @@ async function saveEdit() {
   const idx = entries.findIndex(x => x.id === id);
   if (idx < 0) return;
 
-  const kruste = parseFloat(document.getElementById('e-kruste').value);
-  const brot   = parseFloat(document.getElementById('e-brot').value);
-  const fleisch = parseFloat(document.getElementById('e-fleisch').value);
+  const kruste = numFromId('e-kruste');
+  const brot   = numFromId('e-brot');
+  const fleisch = numFromId('e-fleisch');
   const hasR = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
 
   // Foto verarbeiten
@@ -1459,7 +1471,7 @@ async function saveEdit() {
     name: entryName,
     bezirk:  document.getElementById('e-bezirk').value.trim(),
     sorte:   document.getElementById('e-sorte').value.split(';').map(s=>s.trim()).filter(Boolean),
-    preis:   parseFloat(document.getElementById('e-preis').value) || null,
+    preis:   numFromId('e-preis') || null,
     gesamt:  hasR ? Math.round(((kruste+brot+fleisch)/3)*100)/100 : entries[idx].gesamt,
     kruste:  hasR ? kruste  : entries[idx].kruste,
     brot:    hasR ? brot    : entries[idx].brot,
@@ -1508,9 +1520,9 @@ function deleteEntry() {
 async function addEntry() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { showToast('Name ist erforderlich.'); return; }
-  const kruste = parseFloat(document.getElementById('f-kruste').value);
-  const brot = parseFloat(document.getElementById('f-brot').value);
-  const fleisch = parseFloat(document.getElementById('f-fleisch').value);
+  const kruste = numFromId('f-kruste');
+  const brot = numFromId('f-brot');
+  const fleisch = numFromId('f-fleisch');
   const hasR = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
   const newId = Math.max(...entries.map(e=>e.id), 0) + 1;
 
@@ -1528,7 +1540,7 @@ async function addEntry() {
     id: newId, name,
     bezirk: document.getElementById('f-bezirk').value.trim(),
     sorte: document.getElementById('f-sorte').value.split(';').map(s=>s.trim()).filter(Boolean),
-    preis: parseFloat(document.getElementById('f-preis').value) || null,
+    preis: numFromId('f-preis') || null,
     gesamt: hasR ? Math.round(((kruste+brot+fleisch)/3)*100)/100 : null,
     kruste: hasR?kruste:null, brot: hasR?brot:null, fleisch: hasR?fleisch:null,
     anmerkung: document.getElementById('f-anmerkung').value.trim(),
@@ -2252,9 +2264,9 @@ async function addBLEntry() {
   if (blSelect === 'Ausland' && !ausland) { showToast('Bitte Land eingeben.'); return; }
   if (!name) { showToast('Name ist erforderlich.'); return; }
 
-  const kruste = parseFloat(document.getElementById('bl-kruste').value);
-  const brot   = parseFloat(document.getElementById('bl-brot').value);
-  const fleisch = parseFloat(document.getElementById('bl-fleisch').value);
+  const kruste = numFromId('bl-kruste');
+  const brot   = numFromId('bl-brot');
+  const fleisch = numFromId('bl-fleisch');
   const hasR = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
   const newId = Date.now();
 
@@ -2268,7 +2280,7 @@ async function addBLEntry() {
     id: newId, name, bundesland,
     ort: document.getElementById('bl-ort').value.trim(),
     sorte: document.getElementById('bl-sorte').value.split(';').map(s=>s.trim()).filter(Boolean),
-    preis: parseFloat(document.getElementById('bl-preis').value) || null,
+    preis: numFromId('bl-preis') || null,
     gesamt: hasR ? Math.round(((kruste+brot+fleisch)/3)*100)/100 : null,
     kruste: hasR?kruste:null, brot: hasR?brot:null, fleisch: hasR?fleisch:null,
     anmerkung: document.getElementById('bl-anmerkung').value.trim(),
