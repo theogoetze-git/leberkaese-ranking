@@ -894,7 +894,6 @@ const INITIAL_DATA = [
   {id:22,name:"MyKas by XXXLutz",bezirk:"",sorte:["Der Heurige","Der Bayer","Der Mexikaner","Der Bauer"],preis:2.50,gesamt:4.00,kruste:1.0,brot:7.0,fleisch:4.0,anmerkung:"Bonus-Punkte fürs Topping!",datum:"2026-02-13",foto:"mykas.jpg",lat:null,lng:null},
   {id:101,name:"Landbison",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:102,name:"Fleischerei Hödl",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
-  {id:103,name:"Gugumuck",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"Schneckenleberkäse – legendär",datum:"",foto:"",lat:null,lng:null},
   {id:104,name:"Eder",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:105,name:"Heunisch & Erben",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:106,name:"Fleischerei Andreas Mader",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
@@ -940,6 +939,8 @@ let entries = JSON.parse(localStorage.getItem('lk_entries') || 'null') || INITIA
   // Fehlerhafte "Neuer Luxus-Eintrag" Platzhalter entfernen
   const before = entries.length;
   entries = entries.filter(e => !(e.kategorie === 'luxus' && e.name === 'Neuer Luxus-Eintrag'));
+  // Dublette entfernen: leerer Gugumuck (id 103) – der richtige ist id 209
+  entries = entries.filter(e => e.id !== 103);
   if (changed || entries.length !== before) save();
 })();
 let activeFilter = '';
