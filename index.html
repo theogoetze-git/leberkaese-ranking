@@ -2165,22 +2165,6 @@ function renderStatistik() {
     </div>
   </div>
 
-  ${months.length ? `<div class="stat-section">
-    <h3>Aktivität nach Monat</h3>
-    <div class="stat-heatmap">
-      ${months.map(([ym,n])=>{
-        const intensity = n/maxMonth;
-        const bg = intensity > 0.8 ? '#8B1A1A' : intensity > 0.5 ? '#B02020' : intensity > 0.25 ? '#C8961A' : '#E8DFC8';
-        const col = intensity > 0.25 ? '#fff' : 'var(--text)';
-        const [y,m] = ym.split('-');
-        const mNames = ['','Jän','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-        return `<div class="heat-cell" style="background:${bg};color:${col};" title="${mNames[parseInt(m)]} ${y}: ${n} LK">
-          <div><div style="font-size:0.58rem;">${mNames[parseInt(m)]}</div><div>${n}</div></div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>` : ''}
-
   <div class="stat-section" style="text-align:center;color:var(--text-weich);font-style:italic;font-size:0.85rem;">
     🏆 Bisher <strong style="color:var(--rot);">${rated.length}</strong> Leberkäse bewertet &nbsp;·&nbsp;
     noch <strong style="color:var(--rot);">${all.length - rated.length}</strong> auf der Liste
