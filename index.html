@@ -2052,19 +2052,7 @@ function renderStatistik() {
   const seed = nowD.getFullYear()*53 + weekNo;
   const blRated = (typeof blEntries !== 'undefined' ? blEntries : []).filter(e=>e.gesamt!==null && !e.honorable);
   const lkwPool = [...rated, ...blRated];
-  const lkwComments = [
-    "Ein wahrer Ziegel. Diese Woche gebührt ihm die Ehre.",
-    "Kruste, Brot, Fleisch — hier stimmt die heilige Dreifaltigkeit.",
-    "Ein Leistungskäse, der Maßstäbe setzt.",
-    "Hoaßa — genau richtig für einen Freitag.",
-    "Ein Denkmal aus Brät. Respekt.",
-    "So schmeckt Heimat in Ziegelform.",
-    "Wer den nicht probiert hat, hat den Leberkäse nicht verstanden.",
-    "Der würde sogar den Opernball aufwerten.",
-    "Handwerk, das man schmeckt. Chapeau.",
-  ];
   const lkw = lkwPool.length ? lkwPool[seed % lkwPool.length] : null;
-  const lkwComment = lkwComments[seed % lkwComments.length];
   const lkwPhoto = lkw ? getPhotoSrc(lkw) : null;
   const lkwFlag = (lkw && lkw.bundesland && typeof blFlag==='function') ? blFlag(lkw.bundesland) : '';
   const lkwHero = lkw ? `
@@ -2073,8 +2061,8 @@ function renderStatistik() {
       <div style="padding:1rem 1.2rem 1.2rem;">
         <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.12em;color:#E8C87A;margin-bottom:0.35rem;">🎲 Leberkäse der Woche</div>
         <div style="font-size:1.4rem;font-weight:bold;line-height:1.2;margin-bottom:0.25rem;">${lkwFlag?lkwFlag+' ':''}${lkw.name}</div>
-        <div style="font-size:0.85rem;color:#E8C87A;margin-bottom:0.7rem;">${[lkw.bundesland||lkw.bezirk, lkw.gesamt!==null?lkw.gesamt.toFixed(2)+' ★':''].filter(Boolean).join(' · ')}</div>
-        <div style="font-style:italic;font-size:0.92rem;line-height:1.45;">„${lkwComment}“</div>
+        <div style="font-size:0.85rem;color:#E8C87A;${lkw.anmerkung?'margin-bottom:0.7rem;':''}">${[lkw.bundesland||lkw.bezirk, lkw.gesamt!==null?lkw.gesamt.toFixed(2)+' ★':''].filter(Boolean).join(' · ')}</div>
+        ${lkw.anmerkung?`<div style="font-style:italic;font-size:0.92rem;line-height:1.45;">„${lkw.anmerkung}“</div>`:''}
       </div>
     </div>` : '';
 
