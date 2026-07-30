@@ -1043,6 +1043,18 @@ function numFromId(id) {
   return isNaN(n) ? NaN : n;
 }
 
+// ─── PUSH-BENACHRICHTIGUNGEN (ntfy.sh) ────────────────
+// Nur wer dieses geheime Thema in der ntfy-App abonniert hat, bekommt die Pushes.
+const NTFY_TOPIC = 'leberkaes-theo-9k3xz';
+function notifyPush(title, message, tags) {
+  try {
+    fetch('https://ntfy.sh', {
+      method: 'POST',
+      body: JSON.stringify({ topic: NTFY_TOPIC, title, message, tags: tags || [] })
+    }).catch(() => {});
+  } catch(e) {}
+}
+
 function save() {
   localStorage.setItem('lk_entries', JSON.stringify(entries));
   saveEntriesToFirebase();
@@ -2155,6 +2167,8 @@ async function postForumPost() {
   document.getElementById('forum-body').value = '';
   document.getElementById('forum-autor').value = '';
 
+  notifyPush('🧱 Neuer Forum-Beitrag', `${autor}: ${title}`, ['speech_balloon']);
+
   if (fbAvailable()) {
     const ok = await fbAddPost(post);
     // onValue-Listener aktualisiert forumPosts + renderForum automatisch
@@ -2438,6 +2452,7 @@ async function addBLEntry() {
     lat: null, lng: null, foto: '', photoB64, bezirk: bundesland
   });
   saveBL();
+  notifyPush('🌍 Neuer Worldwide-Eintrag', `${autor} hat "${name}" (${blFlag(bundesland)} ${bundesland}) eingetragen`, ['round_pushpin']);
   ['bl-name','bl-ort','bl-sorte','bl-preis','bl-kruste','bl-brot','bl-fleisch','bl-datum','bl-anmerkung','bl-autor'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('bl-bundesland').value='';
   if (document.getElementById('bl-ausland')) document.getElementById('bl-ausland').value='';
