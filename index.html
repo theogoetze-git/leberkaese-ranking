@@ -816,7 +816,10 @@ select:focus,input:focus{border-color:var(--rot);}
           <button class="btn-sm" onclick="addComment()">Kommentar posten</button>
         </div>
       </div>
-      <button class="modal-close" style="margin-top:1rem;" onclick="document.getElementById('modalOverlay').classList.remove('open')">Schließen</button>
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+        <button class="btn-sm" style="flex:1;" onclick="shareEntry()">🔗 Teilen</button>
+        <button class="modal-close" style="flex:1;margin:0;" onclick="document.getElementById('modalOverlay').classList.remove('open')">Schließen</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1580,6 +1583,28 @@ function closeDetailModal(ev) {
     document.getElementById('modalOverlay').classList.remove('open');
 }
 
+// Eintrag teilen: Web-Share (Handy) oder Link kopieren
+async function shareEntry() {
+  const e = findEntryById(currentModalEntryId);
+  if (!e) return;
+  const url = location.origin + location.pathname + '#e' + e.id;
+  const text = e.gesamt != null ? `${e.name} – ${e.gesamt.toFixed(2)}/10 🧱` : `${e.name} 🧱`;
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Wiener Leberkäse', text, url }); } catch(_){}
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(()=>showToast('✓ Link kopiert')).catch(()=>showToast(url));
+  } else { showToast(url); }
+}
+
+// Deep-Link: #e<id> öffnet direkt den Eintrag
+function handleDeepLink() {
+  const m = (location.hash || '').match(/^#e(\d+)$/);
+  if (!m) return;
+  const e = findEntryById(parseInt(m[1]));
+  if (e) openDetailModal(e);
+}
+window.addEventListener('hashchange', handleDeepLink);
+
 // ─── EDIT MODAL ───────────────────────────────────────
 function openEditModal(id) {
   if (!adminMode) { showToast('Admin-Modus erforderlich.'); return; }
@@ -1951,8 +1976,19 @@ function addLuxusEntry() {
 // ─── KOMMENTARE ───────────────────────────────────────
 let currentModalEntryId = null;
 
-function getComments(id) { return JSON.parse(localStorage.getItem('lk_comments_' + id) || '[]'); }
-function saveComments(id, list) { localStorage.setItem('lk_comments_' + id, JSON.stringify(list)); }
+// Kommentare liegen am Eintrag (e.comments) und syncen über Firebase (entries/blEntries).
+function findEntryById(id) {
+  return entries.find(e => e.id === id)
+      || (typeof blEntries !== 'undefined' ? blEntries.find(e => e.id === id) : null);
+}
+function saveEntryById(id) {
+  if (entries.find(e => e.id === id)) save();
+  else if (typeof blEntries !== 'undefined' && blEntries.find(e => e.id === id)) saveBL();
+}
+function getComments(id) {
+  const e = findEntryById(id);
+  return (e && Array.isArray(e.comments)) ? e.comments : [];
+}
 
 function renderComments(entryId) {
   const list = document.getElementById('commentsList');
@@ -1972,19 +2008,23 @@ function addComment() {
   if (!text) { showToast('Kommentar darf nicht leer sein.'); return; }
   const autor = document.getElementById('commentAutor').value.trim();
   if (!autor) { showToast('Bitte deinen Namen eingeben.'); return; }
-  const comments = getComments(currentModalEntryId);
-  comments.push({ autor, text, datum: new Date().toLocaleDateString('de-AT') });
-  saveComments(currentModalEntryId, comments);
+  const e = findEntryById(currentModalEntryId);
+  if (!e) return;
+  if (!Array.isArray(e.comments)) e.comments = [];
+  e.comments.push({ autor, text, datum: new Date().toLocaleDateString('de-AT') });
+  saveEntryById(currentModalEntryId);
   document.getElementById('commentText').value = '';
+  document.getElementById('commentAutor').value = '';
   renderComments(currentModalEntryId);
   showToast('✓ Kommentar gepostet!');
 }
 
 function deleteComment(idx) {
   if (!adminMode) return;
-  const comments = getComments(currentModalEntryId);
-  comments.splice(idx, 1);
-  saveComments(currentModalEntryId, comments);
+  const e = findEntryById(currentModalEntryId);
+  if (!e || !Array.isArray(e.comments)) return;
+  e.comments.splice(idx, 1);
+  saveEntryById(currentModalEntryId);
   renderComments(currentModalEntryId);
 }
 
@@ -2710,12 +2750,33 @@ function checkFridayNow() {
 setInterval(checkFridayNow, 60_000);
 checkFridayNow();
 
+// Migration: bestehende lokale Kommentare (lk_comments_*) in den Eintrag holen, damit sie syncen
+(function migrateComments() {
+  let cM = false, cB = false;
+  entries.forEach(e => {
+    if (!Array.isArray(e.comments)) {
+      const raw = localStorage.getItem('lk_comments_' + e.id);
+      if (raw) { try { const a = JSON.parse(raw); if (a && a.length) { e.comments = a; cM = true; } } catch(_){} }
+    }
+  });
+  (typeof blEntries !== 'undefined' ? blEntries : []).forEach(e => {
+    if (!Array.isArray(e.comments)) {
+      const raw = localStorage.getItem('lk_comments_' + e.id);
+      if (raw) { try { const a = JSON.parse(raw); if (a && a.length) { e.comments = a; cB = true; } } catch(_){} }
+    }
+  });
+  if (cM) save();
+  if (cB) saveBL();
+})();
+
 // ─── INIT ─────────────────────────────────────────────
 updateAdminUI();
 buildBezirkSelect();
 buildSortePills();
 renderCards();
 setTimeout(updateReminderUI, 100);
+handleDeepLink();
+setTimeout(handleDeepLink, 900); // nochmal nach Firebase-Sync
 </script>
 </body>
 </html>
