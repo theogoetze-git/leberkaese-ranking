@@ -1005,10 +1005,21 @@ const INITIAL_DATA = [
   {id:105,name:"Heunisch & Erben",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:106,name:"Fleischerei Andreas Mader",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:107,name:"Friedrich Szabo",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
-  {id:108,name:"Thum Schinken Bio Markt Freyung",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:109,name:"Fleischerei Steirisch Gutmann",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:110,name:"Bar Barbara",bezirk:"1090",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.226,lng:16.358},
   {id:111,name:"Thum Schinkenmanufaktur am Freyung-Markt",bezirk:"1010",sorte:["Käse","Normal"],preis:5.00,gesamt:7.13,kruste:6,brot:8.2,fleisch:7.2,anmerkung:"Während da Pride schmeckt jeder LK als ob er vo da Stadtmetzg Dornbirn wär. Da Holdersaft um 5€ war o geil.",datum:"13.06.2026",foto:"",lat:48.212,lng:16.364},
+  // ── Noch offen (von Google-Maps-Liste ergänzt) ──────
+  {id:301,name:"Meinklang Hofladen",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
+  {id:302,name:"Der Fleischer am Eck",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
+  {id:303,name:"Fleischhauerei Hofmann",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
+  {id:304,name:"Schreiber Fleisch- und Wurstwaren",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
+  {id:305,name:"Alles Wurst Meidling",bezirk:"1120",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
+  {id:306,name:"das Göxl",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
+  {id:307,name:"Bistro Shop Wiesbauer Wurstspezialitäten",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
+  {id:308,name:"Fleischerei Lukic",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
+  {id:309,name:"Helmut Höfinger",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
+  {id:310,name:"Fleischerei Fritz",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
+  {id:311,name:"Ferdinand Wild",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   // ── Luxus ──────────────────────────────────────────
   {id:201,name:"Zotter Wien",bezirk:"1010",sorte:[],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"Kilopreis: 80 €",datum:"",foto:"",lat:48.208,lng:16.374,kategorie:"luxus"},
   {id:202,name:"Atelier 7",bezirk:"1070",sorte:[],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.202,lng:16.356,kategorie:"luxus"},
@@ -1046,8 +1057,8 @@ let entries = JSON.parse(localStorage.getItem('lk_entries') || 'null') || INITIA
   // Fehlerhafte "Neuer Luxus-Eintrag" Platzhalter entfernen
   const before = entries.length;
   entries = entries.filter(e => !(e.kategorie === 'luxus' && e.name === 'Neuer Luxus-Eintrag'));
-  // Dublette entfernen: leerer Gugumuck (id 103) – der richtige ist id 209
-  entries = entries.filter(e => e.id !== 103);
+  // Dubletten entfernen: leerer Gugumuck (id 103, richtig=209) & Thum "noch offen" (id 108, richtig=111)
+  entries = entries.filter(e => ![103, 108].includes(e.id));
   if (changed || entries.length !== before) save();
 })();
 let activeFilter = '';
@@ -1066,9 +1077,10 @@ function numFromId(id) {
 // ─── PUSH-BENACHRICHTIGUNGEN (ntfy.sh) ────────────────
 // Getrennte Themen pro Typ – so kann jeder gezielt abonnieren, was er will.
 const NTFY_TOPICS = {
-  alarm:     'leberkaes-theo-9k3xz',            // Freitags Ziegel-Alarm (cron-job.org postet hierher)
-  forum:     'leberkaes-theo-forum-9k3xz',      // neue Forum-Beiträge
-  worldwide: 'leberkaes-theo-worldwide-9k3xz',  // neue Worldwide-Einträge
+  alarm:     'leberkaes-theo-9k3xz',              // Freitags Ziegel-Alarm (cron-job.org postet hierher)
+  rangliste: 'leberkaes-theo-rangliste-9k3xz',    // neue Rangliste-Einträge (nur Admin macht die)
+  forum:     'leberkaes-theo-forum-9k3xz',        // neue Forum-Beiträge
+  worldwide: 'leberkaes-theo-worldwide-9k3xz',    // neue Worldwide-Einträge
 };
 function notifyPush(topic, title, message, tags) {
   try {
@@ -1086,6 +1098,7 @@ function renderNotify() {
   const container = document.getElementById('notifyCards');
   if (!container) return;
   const types = [
+    { key:'rangliste', icon:'🏆', name:'Neue Rangliste-Einträge', desc:'Wenn ein neuer bewerteter Leberkäse in die Rangliste kommt.' },
     { key:'forum',     icon:'🧱', name:'Neue Forum-Beiträge',    desc:'Wenn jemand ein neues Thema oder eine Frage postet.' },
     { key:'worldwide', icon:'🌍', name:'Neue Worldwide-Einträge', desc:'Wenn jemand einen Leberkäse aus einem Bundesland oder dem Ausland einträgt.' },
     { key:'alarm',     icon:'📅', name:'Freitags Ziegel-Alarm',   desc:'Jeden Freitag um die Mittagszeit: Zeit für den Leistungskäse!' },
@@ -1710,6 +1723,7 @@ async function addEntry() {
     ...(newPhotoB64 ? { photoB64: newPhotoB64 } : {})
   });
   save();
+  notifyPush(NTFY_TOPICS.rangliste, '🏆 Neuer Rangliste-Eintrag', `${name}${hasR ? ' – ' + (Math.round(((kruste+brot+fleisch)/3)*100)/100).toFixed(2) : ''}`, ['trophy']);
   ['f-name','f-bezirk','f-preis','f-sorte','f-kruste','f-brot','f-fleisch','f-datum','f-anmerkung'].forEach(fid => document.getElementById(fid).value='');
   const fFoto = document.getElementById('f-foto');
   fFoto.value=''; fFoto._b64 = null;
