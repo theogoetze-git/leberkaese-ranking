@@ -347,13 +347,14 @@ select:focus,input:focus{border-color:var(--rot);}
       <h1>Wiener Leberkäse-Ranking</h1>
       <div class="subtitle">Leabagiovanni · Leistungskäse · Hoaßa Ziegel</div>
     </div>
-    <button class="admin-btn" onclick="openNotifyInfo()" title="Benachrichtigungen aktivieren" style="flex-shrink:0;">🔔</button>
+    <button class="admin-btn" onclick="document.getElementById('notifyTabBtn').click()" title="Benachrichtigungen" style="flex-shrink:0;">🔔</button>
   </div>
   <nav>
     <button class="tab-btn active" onclick="showTab('rangliste',this)">Rangliste</button>
     <button class="tab-btn" onclick="showTab('bundeslaender',this)">🌍 Worldwide</button>
     <button class="tab-btn" onclick="showTab('luxus',this)">🥂 Luxus</button>
     <button class="tab-btn" onclick="showTab('forum',this)">Forum</button>
+    <button class="tab-btn" id="notifyTabBtn" onclick="showTab('benachrichtigungen',this)">🔔 Benachrichtigungen</button>
     <button class="tab-btn" onclick="showTab('karte',this)">Karte</button>
     <button class="tab-btn" onclick="showTab('chart',this)">Preis-Leistung</button>
     <button class="tab-btn" onclick="showTab('statistik',this)">Statistik</button>
@@ -540,6 +541,23 @@ select:focus,input:focus{border-color:var(--rot);}
       </div>
     </div>
   </div>
+</div>
+
+<!-- BENACHRICHTIGUNGEN -->
+<div id="tab-benachrichtigungen" class="tab-content">
+  <div class="bl-hero">
+    <h2>🔔 Benachrichtigungen</h2>
+    <p>Wähle selbst, worüber du eine Push aufs Handy bekommst.</p>
+  </div>
+  <div style="background:var(--creme);border:1.5px solid var(--creme-dunkel);border-radius:12px;padding:1rem 1.1rem;margin-bottom:1.2rem;">
+    <strong>So aktivierst du sie:</strong>
+    <ol style="margin:0.5rem 0 0 1.1rem;line-height:1.7;font-size:0.9rem;">
+      <li>Lade die kostenlose <strong>ntfy</strong>-App (App Store / Play Store)</li>
+      <li>Tippe unten bei den gewünschten Benachrichtigungen auf <strong>„Abonnieren“</strong></li>
+      <li>Erlaube der ntfy-App einmalig Mitteilungen</li>
+    </ol>
+  </div>
+  <div id="notifyCards"></div>
 </div>
 
 <!-- KARTE -->
@@ -949,29 +967,6 @@ select:focus,input:focus{border-color:var(--rot);}
   </div>
 </div>
 
-<!-- BENACHRICHTIGUNGEN INFO -->
-<div class="edit-modal-overlay" id="notifyInfoOverlay">
-  <div class="edit-modal" style="max-width:460px;">
-    <div class="edit-modal-header">
-      <h2>🔔 Benachrichtigungen</h2>
-      <button class="btn-close-x" onclick="closeNotifyInfo()">✕</button>
-    </div>
-    <div class="edit-modal-body">
-      <p style="margin-bottom:0.8rem;line-height:1.5;">Bekomme eine Push aufs Handy, sobald jemand einen <strong>Forum-Beitrag</strong> oder <strong>Worldwide-Eintrag</strong> macht. Funktioniert für alle — einfach dasselbe Thema abonnieren.</p>
-      <ol style="margin:0 0 1rem 1.1rem;line-height:1.6;font-size:0.9rem;">
-        <li>Lade die <strong>ntfy</strong>-App (App Store / Play Store, gratis)</li>
-        <li>Tippe unten auf <strong>„In ntfy öffnen“</strong> — oder abonniere manuell dieses Thema:</li>
-      </ol>
-      <div style="display:flex;gap:0.5rem;align-items:center;background:var(--creme-dunkel);border-radius:8px;padding:0.6rem 0.8rem;margin-bottom:1rem;">
-        <code style="flex:1;font-size:0.85rem;word-break:break-all;">leberkaes-theo-9k3xz</code>
-        <button class="btn-sm" onclick="copyNotifyTopic()">Kopieren</button>
-      </div>
-      <a href="https://ntfy.sh/leberkaes-theo-9k3xz" target="_blank" rel="noopener" class="btn-primary" style="display:block;text-align:center;text-decoration:none;">In ntfy öffnen / abonnieren</a>
-      <p style="font-size:0.72rem;color:var(--text-weich);margin-top:0.9rem;line-height:1.4;">Am iPhone: nach dem Abonnieren einmal Benachrichtigungen für die ntfy-App erlauben.</p>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1069,21 +1064,46 @@ function numFromId(id) {
 }
 
 // ─── PUSH-BENACHRICHTIGUNGEN (ntfy.sh) ────────────────
-// Nur wer dieses geheime Thema in der ntfy-App abonniert hat, bekommt die Pushes.
-const NTFY_TOPIC = 'leberkaes-theo-9k3xz';
-function notifyPush(title, message, tags) {
+// Getrennte Themen pro Typ – so kann jeder gezielt abonnieren, was er will.
+const NTFY_TOPICS = {
+  alarm:     'leberkaes-theo-9k3xz',            // Freitags Ziegel-Alarm (cron-job.org postet hierher)
+  forum:     'leberkaes-theo-forum-9k3xz',      // neue Forum-Beiträge
+  worldwide: 'leberkaes-theo-worldwide-9k3xz',  // neue Worldwide-Einträge
+};
+function notifyPush(topic, title, message, tags) {
   try {
     fetch('https://ntfy.sh', {
       method: 'POST',
-      body: JSON.stringify({ topic: NTFY_TOPIC, title, message, tags: tags || [] })
+      body: JSON.stringify({ topic, title, message, tags: tags || [] })
     }).catch(() => {});
   } catch(e) {}
 }
-function openNotifyInfo() { document.getElementById('notifyInfoOverlay').classList.add('open'); }
-function closeNotifyInfo() { document.getElementById('notifyInfoOverlay').classList.remove('open'); }
-function copyNotifyTopic() {
-  if (navigator.clipboard) navigator.clipboard.writeText(NTFY_TOPIC).then(()=>showToast('✓ Thema kopiert')).catch(()=>showToast(NTFY_TOPIC));
-  else showToast(NTFY_TOPIC);
+function copyText(txt) {
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>showToast('✓ Kopiert')).catch(()=>showToast(txt));
+  else showToast(txt);
+}
+function renderNotify() {
+  const container = document.getElementById('notifyCards');
+  if (!container) return;
+  const types = [
+    { key:'forum',     icon:'🧱', name:'Neue Forum-Beiträge',    desc:'Wenn jemand ein neues Thema oder eine Frage postet.' },
+    { key:'worldwide', icon:'🌍', name:'Neue Worldwide-Einträge', desc:'Wenn jemand einen Leberkäse aus einem Bundesland oder dem Ausland einträgt.' },
+    { key:'alarm',     icon:'📅', name:'Freitags Ziegel-Alarm',   desc:'Jeden Freitag um die Mittagszeit: Zeit für den Leistungskäse!' },
+  ];
+  container.innerHTML = types.map(t => {
+    const topic = NTFY_TOPICS[t.key];
+    return `<div style="background:var(--creme);border:1.5px solid var(--creme-dunkel);border-radius:12px;padding:1rem 1.1rem;margin-bottom:0.9rem;">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.3rem;">
+        <span style="font-size:1.4rem;">${t.icon}</span>
+        <strong style="font-size:1rem;">${t.name}</strong>
+      </div>
+      <p style="font-size:0.83rem;color:var(--text-weich);margin:0 0 0.7rem;line-height:1.4;">${t.desc}</p>
+      <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+        <a href="https://ntfy.sh/${topic}" target="_blank" rel="noopener" class="btn-primary" style="text-decoration:none;flex:1;text-align:center;min-width:140px;">Abonnieren</a>
+        <button class="btn-sm" onclick="copyText('${topic}')">Thema kopieren</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function save() {
@@ -1330,6 +1350,7 @@ function showTab(name, btn) {
   if (name === 'luxus')     setTimeout(renderLuxusCards, 50);
   if (name === 'forum')     setTimeout(renderForum, 50);
   if (name === 'statistik') setTimeout(renderStatistik, 50);
+  if (name === 'benachrichtigungen') setTimeout(renderNotify, 50);
 }
 
 // ─── RENDER CARDS ─────────────────────────────────────
@@ -2199,7 +2220,7 @@ async function postForumPost() {
   document.getElementById('forum-body').value = '';
   document.getElementById('forum-autor').value = '';
 
-  notifyPush('🧱 Neuer Forum-Beitrag', `${autor}: ${title}`, ['speech_balloon']);
+  notifyPush(NTFY_TOPICS.forum, '🧱 Neuer Forum-Beitrag', `${autor}: ${title}`, ['speech_balloon']);
 
   if (fbAvailable()) {
     const ok = await fbAddPost(post);
@@ -2485,7 +2506,7 @@ async function addBLEntry() {
     lat: null, lng: null, foto: '', photoB64, bezirk: bundesland
   });
   saveBL();
-  notifyPush('🌍 Neuer Worldwide-Eintrag', `${autor} hat "${name}" (${blFlag(bundesland)} ${bundesland}) eingetragen`, ['round_pushpin']);
+  notifyPush(NTFY_TOPICS.worldwide, '🌍 Neuer Worldwide-Eintrag', `${autor} hat "${name}" (${blFlag(bundesland)} ${bundesland}) eingetragen`, ['round_pushpin']);
   ['bl-name','bl-ort','bl-sorte','bl-preis','bl-kruste','bl-brot','bl-fleisch','bl-datum','bl-anmerkung','bl-autor'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('bl-bundesland').value='';
   if (document.getElementById('bl-ausland')) document.getElementById('bl-ausland').value='';
