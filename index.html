@@ -349,7 +349,7 @@ select:focus,input:focus{border-color:var(--rot);}
   </div>
   <nav>
     <button class="tab-btn active" onclick="showTab('rangliste',this)">Rangliste</button>
-    <button class="tab-btn" onclick="showTab('bundeslaender',this)">Bundesländer</button>
+    <button class="tab-btn" onclick="showTab('bundeslaender',this)">🌍 Worldwide</button>
     <button class="tab-btn" onclick="showTab('luxus',this)">🥂 Luxus</button>
     <button class="tab-btn" onclick="showTab('forum',this)">Forum</button>
     <button class="tab-btn" onclick="showTab('karte',this)">Karte</button>
@@ -434,8 +434,8 @@ select:focus,input:focus{border-color:var(--rot);}
 <!-- BUNDESLÄNDER -->
 <div id="tab-bundeslaender" class="tab-content">
   <div class="bl-hero">
-    <h2>🇦🇹 Österreich jenseits des Rings</h2>
-    <p>Leberkäse kennt keine Landesgrenzen. Einträge aus allen Bundesländern willkommen.</p>
+    <h2>🌍 World Wide Leberkäse</h2>
+    <p>Leberkäse kennt keine Landesgrenzen — Einträge aus allen Bundesländern und dem Ausland willkommen.</p>
   </div>
 
   <div class="bl-tabs">
@@ -452,7 +452,7 @@ select:focus,input:focus{border-color:var(--rot);}
   <!-- FORMULAR (für alle zugänglich) -->
   <div id="bl-form" style="display:none;">
     <div class="bl-form-card">
-      <h3>📍 Neuen Bundesland-Eintrag hinzufügen</h3>
+      <h3>📍 Neuen Eintrag hinzufügen</h3>
       <div class="form-row">
         <div class="form-group">
           <label>Bundesland *</label>
@@ -516,6 +516,13 @@ select:focus,input:focus{border-color:var(--rot);}
       <div class="form-group">
         <label>Anmerkung / Kommentar</label>
         <textarea id="bl-anmerkung" placeholder="Wie war's? Besonderheiten?"></textarea>
+      </div>
+      <div class="form-group" style="background:rgba(200,150,26,0.10);border-radius:8px;padding:0.6rem 0.7rem;">
+        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;margin:0;">
+          <input type="checkbox" id="bl-honorable" style="width:auto;margin:0;transform:scale(1.2);">
+          <span>⭐ Als <strong>Honorable Mention</strong> eintragen</span>
+        </label>
+        <p style="font-size:0.72rem;color:var(--text-weich);margin:0.4rem 0 0;line-height:1.4;">Für etwas, das <strong>kein klassischer Leberkäse</strong> ist, aber gut hierher passt — z.B. ein Gericht <em>mit</em> Leberkäse. Bekommt einen eigenen Sticker und zählt <strong>nicht</strong> ins Ranking (darf aber trotzdem bewertet werden).</p>
       </div>
       <div class="form-group">
         <label>Foto</label>
@@ -854,6 +861,87 @@ select:focus,input:focus{border-color:var(--rot);}
         <button class="btn-primary" onclick="saveEdit()">Speichern</button>
         <button class="btn-secondary" onclick="closeEditModal()">Abbrechen</button>
         <button class="delete-btn" onclick="deleteEntry()">Löschen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WORLDWIDE / BL EDIT MODAL -->
+<div class="edit-modal-overlay" id="blEditModalOverlay">
+  <div class="edit-modal">
+    <div class="edit-modal-header">
+      <h2>Eintrag bearbeiten</h2>
+      <button class="btn-close-x" onclick="closeBLEditModal()">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <input type="hidden" id="be-id">
+      <div class="form-group">
+        <label>Name *</label>
+        <input type="text" id="be-name">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Bundesland / Land *</label>
+          <input type="text" id="be-bundesland" placeholder="z.B. Vorarlberg oder Deutschland">
+        </div>
+        <div class="form-group">
+          <label>Ort</label>
+          <input type="text" id="be-ort" placeholder="z.B. Dornbirn">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sorte(n) (mit ; trennen)</label>
+          <input type="text" id="be-sorte">
+        </div>
+        <div class="form-group">
+          <label>Preis (€)</label>
+          <input type="text" inputmode="decimal" id="be-preis" placeholder="3.50">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Kruste (0–10)</label>
+          <input type="text" inputmode="decimal" id="be-kruste" placeholder="z.B. 6.7">
+        </div>
+        <div class="form-group">
+          <label>Brot (0–10)</label>
+          <input type="text" inputmode="decimal" id="be-brot" placeholder="z.B. 6.7">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Fleisch (0–10)</label>
+          <input type="text" inputmode="decimal" id="be-fleisch" placeholder="z.B. 6.7">
+        </div>
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" id="be-datum">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Anmerkung / Kommentar</label>
+        <textarea id="be-anmerkung"></textarea>
+      </div>
+      <div class="form-group" style="background:rgba(200,150,26,0.10);border-radius:8px;padding:0.6rem 0.7rem;">
+        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;margin:0;">
+          <input type="checkbox" id="be-honorable" style="width:auto;margin:0;transform:scale(1.2);">
+          <span>⭐ Honorable Mention (zählt nicht ins Ranking)</span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label>Autor</label>
+        <input type="text" id="be-autor" placeholder="z.B. Sepp Täglich">
+      </div>
+      <div class="form-group">
+        <label>Foto ersetzen</label>
+        <input type="file" id="be-foto" accept="image/*" onchange="previewPhoto(this,'be-foto-preview')">
+        <img id="be-foto-preview" class="photo-preview" alt="Vorschau">
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveBLEdit()">Speichern</button>
+        <button class="btn-secondary" onclick="closeBLEditModal()">Abbrechen</button>
+        <button class="delete-btn" onclick="deleteBLEntryFromModal()">Löschen</button>
       </div>
     </div>
   </div>
@@ -2147,7 +2235,7 @@ async function saveBLToFirebase() {
 // Firebase-BL-Eintrag normalisieren (null-Werte + leere Arrays wiederherstellen)
 function normalizeBLEntry(e) {
   return {
-    sorte: [], foto: '', photoB64: '', datum: '', anmerkung: '', bundesland: '', ort: '', autor: '', bezirk: '',
+    sorte: [], foto: '', photoB64: '', datum: '', anmerkung: '', bundesland: '', ort: '', autor: '', bezirk: '', honorable: false,
     gesamt: null, kruste: null, brot: null, fleisch: null, preis: null, lat: null, lng: null,
     ...e,
     gesamt:  e.gesamt  !== undefined ? e.gesamt  : null,
@@ -2219,14 +2307,54 @@ function blShowTab(name, btn) {
   if (name === 'liste') renderBLCards();
 }
 
+// Länderflaggen für Ausland-Einträge (österreichische Bundesländer → AT-Flagge)
+const COUNTRY_FLAGS = {
+  'deutschland':'🇩🇪','schweiz':'🇨🇭','italien':'🇮🇹','südtirol':'🇮🇹','frankreich':'🇫🇷',
+  'spanien':'🇪🇸','kroatien':'🇭🇷','slowenien':'🇸🇮','slowakei':'🇸🇰','tschechien':'🇨🇿',
+  'ungarn':'🇭🇺','niederlande':'🇳🇱','belgien':'🇧🇪','polen':'🇵🇱','portugal':'🇵🇹',
+  'griechenland':'🇬🇷','usa':'🇺🇸','vereinigte staaten':'🇺🇸','großbritannien':'🇬🇧',
+  'england':'🇬🇧','schweden':'🇸🇪','norwegen':'🇳🇴','dänemark':'🇩🇰','türkei':'🇹🇷',
+  'liechtenstein':'🇱🇮','luxemburg':'🇱🇺','irland':'🇮🇪','finnland':'🇫🇮','rumänien':'🇷🇴',
+  'bulgarien':'🇧🇬','serbien':'🇷🇸','bosnien':'🇧🇦','japan':'🇯🇵','china':'🇨🇳',
+  'thailand':'🇹🇭','australien':'🇦🇺','kanada':'🇨🇦','österreich':'🇦🇹',
+};
+const AT_STATES = new Set(['burgenland','kärnten','niederösterreich','oberösterreich','salzburg','steiermark','tirol','vorarlberg','wien']);
+function blFlag(bundesland) {
+  if (!bundesland) return '';
+  const key = bundesland.trim().toLowerCase();
+  if (COUNTRY_FLAGS[key]) return COUNTRY_FLAGS[key];
+  if (AT_STATES.has(key)) return '🇦🇹';
+  return '🌍';
+}
+
 function renderBLCards() {
   const grid = document.getElementById('blCardsGrid');
   const noRes = document.getElementById('blNoResults');
   grid.innerHTML = '';
   if (blEntries.length === 0) { noRes.style.display='block'; return; }
   noRes.style.display = 'none';
-  const sorted = [...blEntries].sort((a,b) => (b.gesamt||0)-(a.gesamt||0));
-  sorted.forEach((e,i) => grid.appendChild(makeBLCard(e, i+1)));
+
+  // Normale Einträge (mit Ranking) und Honorable Mentions (ohne Ranking) trennen
+  const normal = blEntries.filter(e => !e.honorable).sort((a,b) => (b.gesamt||0)-(a.gesamt||0));
+  const honorable = blEntries.filter(e => e.honorable).sort((a,b) => (b.gesamt||0)-(a.gesamt||0));
+
+  // Rang nur für bewertete normale Einträge
+  let rank = 0;
+  normal.forEach(e => {
+    const r = e.gesamt !== null ? ++rank : null;
+    grid.appendChild(makeBLCard(e, r));
+  });
+
+  if (honorable.length > 0) {
+    const div = document.createElement('div');
+    div.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;gap:0.8rem;margin:0.8rem 0 0.2rem;';
+    div.innerHTML = `
+      <div style="flex:1;height:1px;background:var(--creme-dunkel);"></div>
+      <span style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-weich);white-space:nowrap;">⭐ Honorable Mentions</span>
+      <div style="flex:1;height:1px;background:var(--creme-dunkel);"></div>`;
+    grid.appendChild(div);
+    honorable.forEach(e => grid.appendChild(makeBLCard(e, null)));
+  }
 }
 
 function makeBLCard(e, rank) {
@@ -2238,6 +2366,9 @@ function makeBLCard(e, rank) {
   const imgHtml = photoSrc ? `<img class="card-img" src="${photoSrc}" alt="${e.name}" loading="lazy">` : '';
   const placeholder = `<div class="card-img-placeholder" ${photoSrc?'style="display:none"':''}>🏔️</div>`;
   const rankClass = rank===1?'gold':rank===2?'silver':rank===3?'bronze':'';
+  const badge = e.honorable
+    ? `<span class="rank-badge" style="background:rgba(200,150,26,0.9);color:#3a2a00;flex-shrink:0;">⭐</span>`
+    : (rank ? `<span class="rank-badge ${rankClass}">${rank}</span>` : '');
   const barsHtml = e.kruste!==null ? `<div class="mini-bars">
     ${miniBar('Kruste',e.kruste)}${miniBar('Brot',e.brot)}${miniBar('Fleisch',e.fleisch)}
   </div>` : '';
@@ -2247,9 +2378,10 @@ function makeBLCard(e, rank) {
     <div class="card-body">
       <div class="card-header">
         <div class="card-name">${e.name}</div>
-        <span class="rank-badge ${rankClass}">${rank}</span>
+        ${badge}
       </div>
-      <div class="card-meta"><span class="bl-badge">${e.bundesland}</span>${e.ort?' · '+e.ort:''}${e.datum?' · '+formatDatum(e.datum):''}</div>
+      ${e.honorable?`<div style="display:inline-block;font-size:0.68rem;color:#8a6d10;background:rgba(200,150,26,0.15);border-radius:6px;padding:0.1rem 0.45rem;margin-bottom:0.2rem;">⭐ Honorable Mention</div>`:''}
+      <div class="card-meta"><span class="bl-badge">${blFlag(e.bundesland)} ${e.bundesland}</span>${e.ort?' · '+e.ort:''}${e.datum?' · '+formatDatum(e.datum):''}</div>
       ${e.sorte.length?`<div class="card-sorte">${e.sorte.map(s=>`<span class="sorte-tag">${s}</span>`).join('')}</div>`:''}
       ${e.gesamt!==null?`<div style="display:flex;align-items:baseline;gap:0.5rem;margin-top:0.2rem;">
         <span class="score-big">${e.gesamt.toFixed(2)}</span>
@@ -2258,7 +2390,7 @@ function makeBLCard(e, rank) {
       ${e.preis?`<div class="card-preis">Preis: <strong>${e.preis.toFixed(2)} €</strong></div>`:''}
       ${e.autor?`<div class="card-meta" style="margin-top:0.3rem;">von ${e.autor}</div>`:''}
     </div>
-    ${adminMode?`<div class="edit-overlay show"><button class="btn-edit-card" onclick="event.stopPropagation();deleteBLEntry(${e.id})">🗑️</button></div>`:''}`;
+    ${adminMode?`<div class="edit-overlay show" style="display:flex;gap:0.3rem;"><button class="btn-edit-card" onclick="event.stopPropagation();openBLEditModal(${e.id})">✏️</button><button class="btn-edit-card" onclick="event.stopPropagation();deleteBLEntry(${e.id})">🗑️</button></div>`:''}`;
   return div;
 }
 
@@ -2290,6 +2422,8 @@ async function addBLEntry() {
     photoB64 = await readFileAsB64(fileInput.files[0]);
   }
 
+  const honorable = document.getElementById('bl-honorable')?.checked || false;
+
   blEntries.push({
     id: newId, name, bundesland,
     ort: document.getElementById('bl-ort').value.trim(),
@@ -2300,6 +2434,7 @@ async function addBLEntry() {
     anmerkung: document.getElementById('bl-anmerkung').value.trim(),
     datum: document.getElementById('bl-datum').value || '',
     autor: document.getElementById('bl-autor').value.trim(),
+    honorable,
     lat: null, lng: null, foto: '', photoB64, bezirk: bundesland
   });
   saveBL();
@@ -2307,6 +2442,7 @@ async function addBLEntry() {
   document.getElementById('bl-bundesland').value='';
   if (document.getElementById('bl-ausland')) document.getElementById('bl-ausland').value='';
   document.getElementById('bl-ausland-wrap').style.display='none';
+  if (document.getElementById('bl-honorable')) document.getElementById('bl-honorable').checked = false;
   document.getElementById('bl-foto').value='';
   document.getElementById('bl-foto-preview').classList.remove('show');
   showToast('✓ Eintrag gespeichert!');
@@ -2321,6 +2457,76 @@ function deleteBLEntry(id) {
   blEntries = blEntries.filter(e => e.id !== id);
   saveBL(); renderBLCards();
   showToast('Gelöscht.');
+}
+
+// ─── WORLDWIDE / BL BEARBEITEN ────────────────────────
+let currentBLEditId = null;
+function openBLEditModal(id) {
+  if (!adminMode) { showToast('Admin-Modus erforderlich.'); return; }
+  const e = blEntries.find(x => x.id === id);
+  if (!e) return;
+  currentBLEditId = id;
+  document.getElementById('be-id').value = id;
+  document.getElementById('be-name').value = e.name || '';
+  document.getElementById('be-bundesland').value = e.bundesland || '';
+  document.getElementById('be-ort').value = e.ort || '';
+  document.getElementById('be-sorte').value = (e.sorte||[]).join('; ');
+  document.getElementById('be-preis').value = e.preis!=null ? e.preis : '';
+  document.getElementById('be-kruste').value = e.kruste!=null ? e.kruste : '';
+  document.getElementById('be-brot').value = e.brot!=null ? e.brot : '';
+  document.getElementById('be-fleisch').value = e.fleisch!=null ? e.fleisch : '';
+  document.getElementById('be-datum').value = e.datum || '';
+  document.getElementById('be-anmerkung').value = e.anmerkung || '';
+  document.getElementById('be-autor').value = e.autor || '';
+  document.getElementById('be-honorable').checked = !!e.honorable;
+  const foto = document.getElementById('be-foto'); foto.value=''; foto._b64 = null;
+  document.getElementById('be-foto-preview').classList.remove('show');
+  document.getElementById('blEditModalOverlay').classList.add('open');
+}
+function closeBLEditModal() {
+  document.getElementById('blEditModalOverlay').classList.remove('open');
+  currentBLEditId = null;
+}
+async function saveBLEdit() {
+  const id = currentBLEditId;
+  const e = blEntries.find(x => x.id === id);
+  if (!e) return;
+  const name = document.getElementById('be-name').value.trim();
+  if (!name) { showToast('Name ist erforderlich.'); return; }
+  const bundesland = document.getElementById('be-bundesland').value.trim();
+  if (!bundesland) { showToast('Bundesland / Land ist erforderlich.'); return; }
+  const kruste = numFromId('be-kruste'), brot = numFromId('be-brot'), fleisch = numFromId('be-fleisch');
+  const hasR = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
+
+  e.name = name;
+  e.bundesland = bundesland;
+  e.bezirk = bundesland;
+  e.ort = document.getElementById('be-ort').value.trim();
+  e.sorte = document.getElementById('be-sorte').value.split(';').map(s=>s.trim()).filter(Boolean);
+  e.preis = numFromId('be-preis') || null;
+  if (hasR) {
+    e.gesamt = Math.round(((kruste+brot+fleisch)/3)*100)/100;
+    e.kruste = kruste; e.brot = brot; e.fleisch = fleisch;
+  } else {
+    e.gesamt = null; e.kruste = null; e.brot = null; e.fleisch = null;
+  }
+  e.datum = document.getElementById('be-datum').value || '';
+  e.anmerkung = document.getElementById('be-anmerkung').value.trim();
+  e.autor = document.getElementById('be-autor').value.trim();
+  e.honorable = document.getElementById('be-honorable').checked;
+
+  const foto = document.getElementById('be-foto');
+  if (foto._b64) { e.photoB64 = foto._b64; e.foto = ''; localStorage.removeItem('lk_photo_bl_' + id); }
+
+  saveBL();
+  closeBLEditModal();
+  renderBLCards();
+  showToast('✓ Gespeichert!');
+}
+function deleteBLEntryFromModal() {
+  const id = currentBLEditId;
+  closeBLEditModal();
+  deleteBLEntry(id);
 }
 
 // ─── SERVICE WORKER & FREITAGS-REMINDER ───────────────
