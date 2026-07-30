@@ -402,7 +402,6 @@ select:focus,input:focus{border-color:var(--rot);}
 <div id="tab-luxus" class="tab-content">
   <div class="luxus-hero">
     <h2>🥂 Der edle Ziegel</h2>
-    <p>Wenn Leberkäse mehr kostet als ein Mittagessen — und es wert ist.</p>
   </div>
   <div id="luxusAdminBar" style="display:none;margin-bottom:1rem;">
     <button class="btn-primary" onclick="addLuxusEntry()">+ Luxus-Eintrag hinzufügen</button>
@@ -416,16 +415,16 @@ select:focus,input:focus{border-color:var(--rot);}
   <div class="forum-compose">
     <h3>📝 Neuen Beitrag schreiben</h3>
     <div class="form-group">
-      <label>Titel *</label>
+      <label>Thema / Frage *</label>
       <input type="text" id="forum-title" placeholder="z.B. Ist die Kruste wirklich wichtiger als das Fleisch?">
     </div>
     <div class="form-group">
-      <label>Inhalt *</label>
-      <textarea id="forum-body" style="height:90px;width:100%;background:var(--creme);border:1.5px solid var(--creme-dunkel);border-radius:8px;padding:0.5rem 0.7rem;font-size:0.88rem;font-family:inherit;outline:none;resize:vertical;" placeholder="Dein Beitrag…"></textarea>
+      <label>Mehr dazu (optional)</label>
+      <textarea id="forum-body" style="height:90px;width:100%;background:var(--creme);border:1.5px solid var(--creme-dunkel);border-radius:8px;padding:0.5rem 0.7rem;font-size:0.88rem;font-family:inherit;outline:none;resize:vertical;" placeholder="Optional: mehr Details, Kontext, deine Meinung…"></textarea>
     </div>
     <div class="form-group">
-      <label>Name (optional)</label>
-      <input type="text" id="forum-autor" placeholder="z.B. Hannes">
+      <label>Name *</label>
+      <input type="text" id="forum-autor" placeholder="z.B. Sepp Täglich">
     </div>
     <button class="btn-primary" onclick="postForumPost()">Beitrag posten</button>
   </div>
@@ -524,7 +523,7 @@ select:focus,input:focus{border-color:var(--rot);}
         <img id="bl-foto-preview" class="photo-preview" alt="Vorschau">
       </div>
       <div class="form-group">
-        <label>Dein Name (optional)</label>
+        <label>Dein Name *</label>
         <input type="text" id="bl-autor" placeholder="z.B. Sepp Täglich">
       </div>
       <div class="btn-row">
@@ -668,7 +667,7 @@ select:focus,input:focus{border-color:var(--rot);}
         </div>
         <div class="form-group">
           <label>Dein Name (optional)</label>
-          <input type="text" id="k-absender" placeholder="z.B. Hannes">
+          <input type="text" id="k-absender" placeholder="z.B. Sepp Täglich">
         </div>
       </div>
       <div class="form-group">
@@ -785,7 +784,7 @@ select:focus,input:focus{border-color:var(--rot);}
         <h4>💬 Kommentare</h4>
         <div id="commentsList"></div>
         <div class="comment-form">
-          <input type="text" id="commentAutor" placeholder="Dein Name (optional)">
+          <input type="text" id="commentAutor" placeholder="z.B. Sepp Täglich">
           <textarea id="commentText" placeholder="Kommentar schreiben…"></textarea>
           <button class="btn-sm" onclick="addComment()">Kommentar posten</button>
         </div>
@@ -1739,7 +1738,7 @@ function renderLuxusCards() {
     div.className = 'card';
     div.style.cssText = 'background:linear-gradient(145deg,#2A1E0A,#1A1208);color:#F0DDA0;';
     const photoSrc = getPhotoSrc(e);
-    const visited = !!e.datum;
+    const visited = !!photoSrc;  // probiert, sobald ein Bild vorhanden ist
 
     div.innerHTML = `
       ${photoSrc
@@ -1797,8 +1796,9 @@ function addComment() {
   const text = document.getElementById('commentText').value.trim();
   if (!text) { showToast('Kommentar darf nicht leer sein.'); return; }
   const autor = document.getElementById('commentAutor').value.trim();
+  if (!autor) { showToast('Bitte deinen Namen eingeben.'); return; }
   const comments = getComments(currentModalEntryId);
-  comments.push({ autor: autor||'Anonym', text, datum: new Date().toLocaleDateString('de-AT') });
+  comments.push({ autor, text, datum: new Date().toLocaleDateString('de-AT') });
   saveComments(currentModalEntryId, comments);
   document.getElementById('commentText').value = '';
   renderComments(currentModalEntryId);
@@ -2033,7 +2033,7 @@ function renderForum() {
       <div class="forum-replies">
         ${replies||'<div style="font-size:0.78rem;color:var(--text-weich);font-style:italic;">Noch keine Antworten.</div>'}
         <div class="forum-reply-form" style="margin-top:0.8rem;">
-          <input type="text" id="reply-autor-${i}" placeholder="Name (optional)" style="max-width:120px;">
+          <input type="text" id="reply-autor-${i}" placeholder="z.B. Sepp Täglich" style="max-width:150px;">
           <input type="text" id="reply-text-${i}" placeholder="Antwort schreiben…" style="flex:1;">
           <button class="btn-sm" onclick="postReply(${i})">Antworten</button>
         </div>
@@ -2045,10 +2045,12 @@ function renderForum() {
 async function postForumPost() {
   const title = document.getElementById('forum-title').value.trim();
   const body  = document.getElementById('forum-body').value.trim();
-  if (!title || !body) { showToast('Titel und Inhalt erforderlich.'); return; }
+  const autor = document.getElementById('forum-autor').value.trim();
+  if (!title) { showToast('Bitte ein Thema / eine Frage eingeben.'); return; }
+  if (!autor) { showToast('Bitte deinen Namen eingeben.'); return; }
   const post = {
     title, body,
-    autor: document.getElementById('forum-autor').value.trim() || 'Anonym',
+    autor,
     datum: new Date().toLocaleDateString('de-AT'),
     ts: Date.now(),
     replies: []
@@ -2072,9 +2074,10 @@ async function postReply(postIdx) {
   const text  = document.getElementById('reply-text-' + postIdx)?.value.trim();
   const autor = document.getElementById('reply-autor-' + postIdx)?.value.trim();
   if (!text) { showToast('Antwort darf nicht leer sein.'); return; }
+  if (!autor) { showToast('Bitte deinen Namen eingeben.'); return; }
   const post = forumPosts[postIdx];
   if (!post.replies) post.replies = [];
-  post.replies.push({ autor: autor||'Anonym', text, datum: new Date().toLocaleDateString('de-AT'), ts: Date.now() });
+  post.replies.push({ autor, text, datum: new Date().toLocaleDateString('de-AT'), ts: Date.now() });
 
   if (fbAvailable() && post._fbKey) {
     const ok = await fbAddReply(post._fbKey, post.replies);
@@ -2261,9 +2264,11 @@ async function addBLEntry() {
   const ausland  = document.getElementById('bl-ausland')?.value.trim();
   const bundesland = blSelect === 'Ausland' ? (ausland || 'Ausland') : blSelect;
   const name = document.getElementById('bl-name').value.trim();
+  const autor = document.getElementById('bl-autor').value.trim();
   if (!blSelect) { showToast('Bitte Bundesland wählen.'); return; }
   if (blSelect === 'Ausland' && !ausland) { showToast('Bitte Land eingeben.'); return; }
   if (!name) { showToast('Name ist erforderlich.'); return; }
+  if (!autor) { showToast('Bitte deinen Namen eingeben.'); return; }
 
   const kruste = numFromId('bl-kruste');
   const brot   = numFromId('bl-brot');
