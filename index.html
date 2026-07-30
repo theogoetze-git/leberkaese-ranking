@@ -2006,6 +2006,9 @@ function renderStatistik() {
   const priced = rated.filter(e=>e.preis);
   const avgPreis = priced.length ? avg(priced.map(e=>e.preis)) : null;
   const bestValue = priced.length ? priced.reduce((a,b)=>(b.gesamt/b.preis)>(a.gesamt/a.preis)?b:a) : null;
+  const cheapest = priced.length ? priced.reduce((a,b)=>b.preis<a.preis?b:a) : null;
+  const priciest = priced.length ? priced.reduce((a,b)=>b.preis>a.preis?b:a) : null;
+  const blCount = (typeof blEntries !== 'undefined' ? blEntries : []).length;
 
   // Sorte-Häufigkeit
   const sorteCounts = {};
@@ -2043,8 +2046,41 @@ function renderStatistik() {
   const dist = [0,0,0,0,0]; // <4, 4-6, 6-7, 7-8, 8-10
   scores.forEach(s=>{ if(s<4)dist[0]++; else if(s<6)dist[1]++; else if(s<7)dist[2]++; else if(s<8)dist[3]++; else dist[4]++; });
 
+  // ── Leberkäse der Woche (zufällig, aber stabil pro Woche) ──
+  const nowD = new Date();
+  const weekNo = Math.floor((nowD - new Date(nowD.getFullYear(),0,1)) / (7*24*3600*1000));
+  const seed = nowD.getFullYear()*53 + weekNo;
+  const blRated = (typeof blEntries !== 'undefined' ? blEntries : []).filter(e=>e.gesamt!==null && !e.honorable);
+  const lkwPool = [...rated, ...blRated];
+  const lkwComments = [
+    "Ein wahrer Ziegel. Diese Woche gebührt ihm die Ehre.",
+    "Kruste, Brot, Fleisch — hier stimmt die heilige Dreifaltigkeit.",
+    "Ein Leistungskäse, der Maßstäbe setzt.",
+    "Hoaßa — genau richtig für einen Freitag.",
+    "Ein Denkmal aus Brät. Respekt.",
+    "So schmeckt Heimat in Ziegelform.",
+    "Wer den nicht probiert hat, hat den Leberkäse nicht verstanden.",
+    "Der würde sogar den Opernball aufwerten.",
+    "Handwerk, das man schmeckt. Chapeau.",
+  ];
+  const lkw = lkwPool.length ? lkwPool[seed % lkwPool.length] : null;
+  const lkwComment = lkwComments[seed % lkwComments.length];
+  const lkwPhoto = lkw ? getPhotoSrc(lkw) : null;
+  const lkwFlag = (lkw && lkw.bundesland && typeof blFlag==='function') ? blFlag(lkw.bundesland) : '';
+  const lkwHero = lkw ? `
+    <div style="position:relative;border-radius:16px;overflow:hidden;margin-bottom:1.5rem;background:linear-gradient(145deg,#8B1A1A,#5A0E0E);color:#F5E5C0;box-shadow:0 6px 20px rgba(0,0,0,0.18);">
+      ${lkwPhoto?`<img src="${lkwPhoto}" style="width:100%;height:190px;object-fit:cover;opacity:0.9;" onerror="this.style.display='none'">`:''}
+      <div style="padding:1rem 1.2rem 1.2rem;">
+        <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.12em;color:#E8C87A;margin-bottom:0.35rem;">🎲 Leberkäse der Woche</div>
+        <div style="font-size:1.4rem;font-weight:bold;line-height:1.2;margin-bottom:0.25rem;">${lkwFlag?lkwFlag+' ':''}${lkw.name}</div>
+        <div style="font-size:0.85rem;color:#E8C87A;margin-bottom:0.7rem;">${[lkw.bundesland||lkw.bezirk, lkw.gesamt!==null?lkw.gesamt.toFixed(2)+' ★':''].filter(Boolean).join(' · ')}</div>
+        <div style="font-style:italic;font-size:0.92rem;line-height:1.45;">„${lkwComment}“</div>
+      </div>
+    </div>` : '';
+
   el.innerHTML = `
-  <h2 style="font-size:1.3rem;margin-bottom:1.2rem;font-weight:normal;">Statistik</h2>
+  <h2 style="font-size:1.3rem;margin-bottom:1.2rem;font-weight:normal;">📊 Statistik</h2>
+  ${lkwHero}
 
   <div class="stat-grid">
     <div class="stat-card">
@@ -2070,6 +2106,18 @@ function renderStatistik() {
     ${bestValue ? `<div class="stat-card">
       <div class="stat-val" style="font-size:1rem;color:var(--gold);">${(bestValue.gesamt/bestValue.preis).toFixed(2)}</div>
       <div class="stat-label">💰 Preis-Leistungs-Sieger<br><strong style="color:var(--text);font-size:0.78rem;">${bestValue.name}</strong></div>
+    </div>` : ''}
+    ${cheapest ? `<div class="stat-card">
+      <div class="stat-val" style="font-size:1.3rem;">${cheapest.preis.toFixed(2)} €</div>
+      <div class="stat-label">🪙 Günstigster<br><strong style="color:var(--text);font-size:0.78rem;">${cheapest.name}</strong></div>
+    </div>` : ''}
+    ${priciest ? `<div class="stat-card">
+      <div class="stat-val" style="font-size:1.3rem;">${priciest.preis.toFixed(2)} €</div>
+      <div class="stat-label">💸 Teuerster<br><strong style="color:var(--text);font-size:0.78rem;">${priciest.name}</strong></div>
+    </div>` : ''}
+    ${blCount ? `<div class="stat-card">
+      <div class="stat-val" style="color:var(--gold);">${blCount}</div>
+      <div class="stat-label">🌍 Worldwide</div>
     </div>` : ''}
   </div>
 
