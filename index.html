@@ -79,6 +79,7 @@ select:focus,input:focus{border-color:var(--rot);}
 .mini-bar-track{flex:1;height:5px;background:var(--creme-dunkel);border-radius:3px;overflow:hidden;}
 .mini-bar-fill{height:100%;border-radius:3px;background:var(--rot);}
 .card-preis{font-size:0.8rem;color:var(--text-weich);}
+.card-anmerkung{font-size:0.78rem;color:var(--text-weich);font-style:italic;margin-top:0.4rem;line-height:1.35;}
 .card-preis strong{color:var(--text);}
 .no-rating{opacity:0.55;}
 .badge-unbewertet{background:var(--creme-dunkel);color:var(--braun-hell);border-radius:8px;padding:0.2rem 0.6rem;font-size:0.72rem;display:inline-block;}
@@ -1395,6 +1396,7 @@ function makeCard(e, rank) {
   const sorteHtml = e.sorte.length ? `<div class="card-sorte">${e.sorte.map(s=>`<span class="sorte-tag">${s}</span>`).join('')}</div>` : '';
   const preisHtml = e.preis ? `<div class="card-preis">Preis: <strong>${e.preis.toFixed(2)} €</strong></div>` : '';
   const datumHtml = (e.datum||e.bezirk) ? `<div class="card-meta">${[e.bezirk,e.datum?formatDatum(e.datum):null].filter(Boolean).join(' · ')}</div>` : '';
+  const anmerkungHtml = e.anmerkung ? `<div class="card-anmerkung">„${e.anmerkung}“</div>` : '';
   const barsHtml = e.kruste!==null ? `<div class="mini-bars">
     ${miniBar('Kruste',e.kruste)}${miniBar('Brot',e.brot)}${miniBar('Fleisch',e.fleisch)}
   </div>` : '';
@@ -1411,7 +1413,7 @@ function makeCard(e, rank) {
         <span class="score-big">${e.gesamt.toFixed(2)}</span>
         <span class="score-stars">${starsFor(e.gesamt)}</span>
       </div>
-      ${barsHtml}${preisHtml}
+      ${barsHtml}${preisHtml}${anmerkungHtml}
     </div>
     <div class="edit-overlay ${adminMode?'show':''}">
       <button class="btn-edit-card" onclick="event.stopPropagation();openEditModal(${e.id})">✏️ Bearbeiten</button>
@@ -2432,6 +2434,7 @@ function makeBLCard(e, rank) {
         <span class="score-stars">${starsFor(e.gesamt)}</span>
       </div>${barsHtml}`:'<div class="card-meta" style="margin-top:0.3rem;">Noch nicht bewertet</div>'}
       ${e.preis?`<div class="card-preis">Preis: <strong>${e.preis.toFixed(2)} €</strong></div>`:''}
+      ${e.anmerkung?`<div class="card-anmerkung">„${e.anmerkung}“</div>`:''}
       ${e.autor?`<div class="card-meta" style="margin-top:0.3rem;">von ${e.autor}</div>`:''}
     </div>
     ${adminMode?`<div class="edit-overlay show" style="display:flex;gap:0.3rem;"><button class="btn-edit-card" onclick="event.stopPropagation();openBLEditModal(${e.id})">✏️</button><button class="btn-edit-card" onclick="event.stopPropagation();deleteBLEntry(${e.id})">🗑️</button></div>`:''}`;
