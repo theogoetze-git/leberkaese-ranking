@@ -351,7 +351,7 @@ select:focus,input:focus{border-color:var(--rot);}
   </div>
   <nav>
     <button class="tab-btn active" onclick="showTab('rangliste',this)">🏆 Rangliste</button>
-    <button class="tab-btn" onclick="showTab('bundeslaender',this)">🌍 Worldwide</button>
+    <button class="tab-btn" onclick="showTab('bundeslaender',this)">🌍 Community</button>
     <button class="tab-btn" onclick="showTab('luxus',this)">🥂 Luxus</button>
     <button class="tab-btn" onclick="showTab('forum',this)">💬 Forum</button>
     <button class="tab-btn" id="notifyTabBtn" onclick="showTab('benachrichtigungen',this)">🔔 Benachrichtigungen</button>
@@ -449,20 +449,21 @@ select:focus,input:focus{border-color:var(--rot);}
 <!-- BUNDESLÄNDER -->
 <div id="tab-bundeslaender" class="tab-content">
   <div class="bl-hero">
-    <h2>🌍 World Wide Leberkäse</h2>
-    <p>Leberkäse kennt keine Landesgrenzen — Einträge aus allen Bundesländern und dem Ausland willkommen.</p>
+    <h2>🌍 Community-Leberkäse</h2>
+    <p>Von Wien bis Übersee — jeder kann hier seinen Leberkäse eintragen.</p>
   </div>
 
   <div class="bl-tabs">
-    <button class="bl-tab-pill active" onclick="blShowTab('liste',this)">Rangliste</button>
+    <button class="bl-tab-pill active" onclick="blShowTab('liste',this)">Karte & Liste</button>
     <button class="bl-tab-pill" onclick="blShowTab('form',this)">+ Eintrag hinzufügen</button>
   </div>
 
   <!-- LISTE -->
   <div id="bl-liste">
+    <div id="blMap" style="height:300px;border-radius:12px;overflow:hidden;margin-bottom:1.2rem;display:none;"></div>
     <div id="blLeaderboard" style="margin-bottom:1.1rem;"></div>
     <div class="cards-grid" id="blCardsGrid"></div>
-    <div id="blNoResults" style="display:none;text-align:center;padding:2rem;color:var(--text-weich);">Noch keine Einträge aus den Bundesländern. Sei der Erste! 🏔️</div>
+    <div id="blNoResults" style="display:none;text-align:center;padding:2rem;color:var(--text-weich);">Noch keine Community-Einträge. Sei der Erste! 🌍</div>
   </div>
 
   <!-- FORMULAR (für alle zugänglich) -->
@@ -474,6 +475,7 @@ select:focus,input:focus{border-color:var(--rot);}
           <label>Bundesland *</label>
           <select id="bl-bundesland" onchange="toggleAuslandField()">
             <option value="">– bitte wählen –</option>
+            <option>Wien</option>
             <option>Burgenland</option>
             <option>Kärnten</option>
             <option>Niederösterreich</option>
@@ -1139,7 +1141,7 @@ function renderNotify() {
   if (!container) return;
   container.innerHTML = `
     <div style="background:var(--creme);border:1.5px solid var(--creme-dunkel);border-radius:12px;padding:1.2rem;margin-bottom:0.9rem;">
-      <p style="font-size:0.9rem;color:var(--text);margin:0 0 0.8rem;line-height:1.5;">Ein Abo für <strong>alles</strong>: neue Rangliste- 🏆, Worldwide- 🌍 und Forum-Beiträge 🧱 sowie der Freitags-Ziegel-Alarm 📅. Tippe auf Abonnieren und du bekommst alles aufs Handy.</p>
+      <p style="font-size:0.9rem;color:var(--text);margin:0 0 0.8rem;line-height:1.5;">Ein Abo für <strong>alles</strong>: neue Rangliste- 🏆, Community- 🌍 und Forum-Beiträge 🧱 sowie der Freitags-Ziegel-Alarm 📅. Tippe auf Abonnieren und du bekommst alles aufs Handy.</p>
       <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
         <a href="https://ntfy.sh/${NTFY_TOPIC}" target="_blank" rel="noopener" class="btn-primary" style="text-decoration:none;flex:1;text-align:center;min-width:160px;">🔔 Alle Benachrichtigungen abonnieren</a>
         <button class="btn-sm" onclick="copyText('${NTFY_TOPIC}')">Thema kopieren</button>
@@ -1492,6 +1494,7 @@ function showTab(name, btn) {
   if (name === 'forum')     setTimeout(renderForum, 50);
   if (name === 'statistik') setTimeout(renderStatistik, 50);
   if (name === 'benachrichtigungen') setTimeout(renderNotify, 50);
+  if (name === 'bundeslaender') setTimeout(() => { if (document.getElementById('bl-liste').style.display !== 'none') { renderBLCards(); renderBLMap(); } }, 80);
 }
 
 // ─── RENDER CARDS ─────────────────────────────────────
@@ -2270,7 +2273,7 @@ function renderStatistik() {
     </div>` : ''}
     ${blCount ? `<div class="stat-card">
       <div class="stat-val" style="color:var(--gold);">${blCount}</div>
-      <div class="stat-label">🌍 Worldwide</div>
+      <div class="stat-label">🌍 Community</div>
     </div>` : ''}
   </div>
 
@@ -2582,7 +2585,7 @@ function blShowTab(name, btn) {
   document.getElementById('bl-form').style.display  = name==='form'  ? 'block' : 'none';
   document.querySelectorAll('.bl-tab-pill').forEach(p => p.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  if (name === 'liste') renderBLCards();
+  if (name === 'liste') { renderBLCards(); setTimeout(renderBLMap, 80); }
 }
 
 // Länderflaggen für Ausland-Einträge (österreichische Bundesländer → AT-Flagge)
@@ -2615,7 +2618,7 @@ function renderBLLeaderboard() {
   const medals = ['🥇','🥈','🥉'];
   el.innerHTML = `
     <div style="background:var(--creme);border:1.5px solid var(--creme-dunkel);border-radius:12px;padding:0.9rem 1rem;">
-      <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-weich);margin-bottom:0.6rem;">🏅 Top-Tester · Worldwide</div>
+      <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-weich);margin-bottom:0.6rem;">🏅 Top-Tester · Community</div>
       ${top.map(([name,n],i)=>`
         <div style="display:flex;align-items:center;gap:0.6rem;padding:0.25rem 0;${i<top.length-1?'border-bottom:1px solid var(--creme-dunkel);':''}">
           <span style="width:1.6rem;text-align:center;">${medals[i]||(i+1)+'.'}</span>
@@ -2625,8 +2628,78 @@ function renderBLLeaderboard() {
     </div>`;
 }
 
+// ─── COMMUNITY-KARTE (Pins + Auto-Geocoding via OpenStreetMap) ──
+let blMapInstance = null, blGeocoding = false;
+function buildGeoQuery(e) {
+  const region = (e.bundesland||'').trim();
+  const key = region.toLowerCase();
+  let country = region;
+  if (AT_STATES.has(key) || key === 'wien') country = 'Österreich';
+  else if (key === 'südtirol') country = 'Italien';
+  const parts = [];
+  if (e.ort) parts.push(e.ort.trim());
+  if (region && region !== country) parts.push(region);
+  if (country) parts.push(country);
+  return [...new Set(parts.filter(Boolean))].join(', ');
+}
+async function geocodeEntry(e) {
+  if (e.lat != null && e.lng != null) return false;
+  const q = buildGeoQuery(e);
+  if (!q) return false;
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q));
+    const j = await r.json();
+    if (j && j[0]) {
+      e.lat = parseFloat(j[0].lat); e.lng = parseFloat(j[0].lon);
+      saveBLLocal(); fbSetBL(e);
+      return true;
+    }
+  } catch(_) {}
+  return false;
+}
+async function geocodeMissing() {
+  if (blGeocoding) return;
+  const todo = blEntries.filter(e => (e.lat == null || e.lng == null) && (e.ort || e.bundesland));
+  if (!todo.length) return;
+  blGeocoding = true;
+  for (const e of todo) {
+    const ok = await geocodeEntry(e);
+    if (ok) drawBLMarkers();
+    await new Promise(r => setTimeout(r, 1200)); // Nominatim Rate-Limit (1/s)
+  }
+  blGeocoding = false;
+}
+function drawBLMarkers() {
+  if (!blMapInstance) return;
+  blMapInstance._mk.clearLayers();
+  const pts = [];
+  blEntries.forEach(e => {
+    if (typeof e.lat === 'number' && typeof e.lng === 'number') {
+      const popup = `<strong>${blFlag(e.bundesland)} ${e.name}</strong><br>${[e.ort, e.bundesland].filter(Boolean).join(', ')}${e.gesamt!=null?'<br>⭐ '+e.gesamt.toFixed(2):''}`;
+      blMapInstance._mk.addLayer(L.marker([e.lat, e.lng]).bindPopup(popup));
+      pts.push([e.lat, e.lng]);
+    }
+  });
+  if (pts.length) blMapInstance.fitBounds(pts, { padding:[30,30], maxZoom:11 });
+}
+function renderBLMap() {
+  const el = document.getElementById('blMap');
+  if (!el) return;
+  if (blEntries.length === 0) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  if (!blMapInstance) {
+    blMapInstance = L.map('blMap', { scrollWheelZoom:false }).setView([47.7, 13.4], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap', maxZoom:19 }).addTo(blMapInstance);
+    blMapInstance._mk = L.layerGroup().addTo(blMapInstance);
+  }
+  blMapInstance.invalidateSize();
+  drawBLMarkers();
+  geocodeMissing();
+}
+
 function renderBLCards() {
   renderBLLeaderboard();
+  if (blMapInstance) drawBLMarkers();
   const grid = document.getElementById('blCardsGrid');
   const noRes = document.getElementById('blNoResults');
   grid.innerHTML = '';
@@ -2759,7 +2832,8 @@ async function addBLEntry() {
     localStorage.setItem('lk_bl_synced', JSON.stringify([...blSynced]));
     saveBLLocal();
     fbSetBL(entry);                        // gezielt nur diesen Eintrag schreiben
-    notifyPush(NTFY_TOPIC, '🌍 Neuer Worldwide-Eintrag', `${autor} hat "${name}" (${blFlag(bundesland)} ${bundesland}) eingetragen`, ['round_pushpin']);
+    geocodeEntry(entry).then(ok => { if (ok && blMapInstance) drawBLMarkers(); }); // Pin für neuen Ort setzen
+    notifyPush(NTFY_TOPIC, '🌍 Neuer Community-Eintrag', `${autor} hat "${name}" (${blFlag(bundesland)} ${bundesland}) eingetragen`, ['round_pushpin']);
 
     ['bl-name','bl-ort','bl-sorte','bl-preis','bl-kruste','bl-brot','bl-fleisch','bl-datum','bl-anmerkung','bl-autor'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('bl-bundesland').value='';
