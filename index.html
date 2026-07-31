@@ -544,6 +544,7 @@ select:focus,input:focus{border-color:var(--rot);}
         <label>Foto</label>
         <input type="file" id="bl-foto" accept="image/*" onchange="previewPhoto(this,'bl-foto-preview')">
         <img id="bl-foto-preview" class="photo-preview" alt="Vorschau">
+        <button type="button" class="btn-sm" onclick="openCropper('bl-foto','bl-foto-preview')" style="margin-top:0.4rem;">✂️ Zuschneiden</button>
       </div>
       <div class="form-group">
         <label>Dein Name *</label>
@@ -786,6 +787,7 @@ select:focus,input:focus{border-color:var(--rot);}
           <label>Foto hochladen</label>
           <input type="file" id="f-foto" accept="image/*" onchange="previewPhoto(this,'f-foto-preview')">
           <img id="f-foto-preview" class="photo-preview" alt="Vorschau">
+          <button type="button" class="btn-sm" onclick="openCropper('f-foto','f-foto-preview')" style="margin-top:0.4rem;">✂️ Zuschneiden</button>
         </div>
         <div class="btn-row">
           <button class="btn-primary" onclick="addEntry()">Eintrag speichern</button>
@@ -892,6 +894,7 @@ select:focus,input:focus{border-color:var(--rot);}
         <label>Foto ersetzen</label>
         <input type="file" id="e-foto" accept="image/*" onchange="previewPhoto(this,'e-foto-preview')">
         <img id="e-foto-preview" class="photo-preview" alt="Vorschau">
+        <button type="button" class="btn-sm" onclick="openCropper('e-foto','e-foto-preview')" style="margin-top:0.4rem;">✂️ Zuschneiden</button>
       </div>
       <div class="btn-row">
         <button class="btn-primary" onclick="saveEdit()">Speichern</button>
@@ -973,11 +976,36 @@ select:focus,input:focus{border-color:var(--rot);}
         <label>Foto ersetzen</label>
         <input type="file" id="be-foto" accept="image/*" onchange="previewPhoto(this,'be-foto-preview')">
         <img id="be-foto-preview" class="photo-preview" alt="Vorschau">
+        <button type="button" class="btn-sm" onclick="openCropper('be-foto','be-foto-preview')" style="margin-top:0.4rem;">✂️ Zuschneiden</button>
       </div>
       <div class="btn-row">
         <button class="btn-primary" onclick="saveBLEdit()">Speichern</button>
         <button class="btn-secondary" onclick="closeBLEditModal()">Abbrechen</button>
         <button class="delete-btn" onclick="deleteBLEntryFromModal()">Löschen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BILD ZUSCHNEIDEN -->
+<div class="edit-modal-overlay" id="cropOverlay">
+  <div class="edit-modal" style="max-width:380px;">
+    <div class="edit-modal-header">
+      <h2>✂️ Bild zuschneiden</h2>
+      <button class="btn-close-x" onclick="closeCropper()">✕</button>
+    </div>
+    <div class="edit-modal-body" style="text-align:center;">
+      <div id="cropFrame" style="position:relative;width:300px;height:300px;max-width:100%;margin:0 auto;overflow:hidden;border-radius:12px;background:#111;touch-action:none;cursor:grab;">
+        <canvas id="cropCanvas" width="300" height="300" style="display:block;"></canvas>
+      </div>
+      <div style="margin:0.9rem 0;display:flex;align-items:center;gap:0.6rem;">
+        <span>🔍</span>
+        <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" oninput="cropZoomChange(this.value)" style="flex:1;">
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-weich);margin-bottom:0.8rem;">Ziehen zum Verschieben · Regler zum Zoomen</p>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="applyCrop()">Übernehmen</button>
+        <button class="btn-secondary" onclick="closeCropper()">Abbrechen</button>
       </div>
     </div>
   </div>
@@ -1300,6 +1328,87 @@ function previewPhoto(input, previewId) {
 }
 
 function readFileAsB64(file) { return compressImage(file); }
+
+// ─── BILD ZUSCHNEIDEN (Pan & Zoom, quadratischer Ausschnitt) ──
+const CROP_F = 300; // Anzeigegröße des Ausschnitts
+let cropState = { img:null, scale:1, minScale:1, x:0, y:0, targetInputId:null, previewId:null };
+let cropWired = false;
+
+function openCropper(inputId, previewId) {
+  const input = document.getElementById(inputId);
+  const file = input.files && input.files[0];
+  let srcP;
+  if (file) srcP = new Promise(r=>{ const rd=new FileReader(); rd.onload=e=>r(e.target.result); rd.readAsDataURL(file); });
+  else if (input._b64) srcP = Promise.resolve(input._b64);
+  else if (document.getElementById(previewId)?.src && document.getElementById(previewId).classList.contains('show')) srcP = Promise.resolve(document.getElementById(previewId).src);
+  else { showToast('Bitte zuerst ein Foto auswählen.'); return; }
+
+  srcP.then(src => {
+    const img = new Image();
+    img.onload = () => {
+      const minScale = Math.max(CROP_F/img.width, CROP_F/img.height);
+      cropState = {
+        img, minScale, scale: minScale, targetInputId: inputId, previewId,
+        x: (CROP_F - img.width*minScale)/2, y: (CROP_F - img.height*minScale)/2
+      };
+      document.getElementById('cropZoom').value = 1;
+      document.getElementById('cropOverlay').classList.add('open');
+      wireCropper();
+      drawCrop();
+    };
+    img.src = src;
+  });
+}
+function drawCrop() {
+  if (!cropState.img) return;
+  const ctx = document.getElementById('cropCanvas').getContext('2d');
+  ctx.clearRect(0,0,CROP_F,CROP_F);
+  const s = cropState.scale;
+  ctx.drawImage(cropState.img, cropState.x, cropState.y, cropState.img.width*s, cropState.img.height*s);
+}
+function clampCrop() {
+  const s = cropState.scale, w = cropState.img.width*s, h = cropState.img.height*s;
+  cropState.x = Math.min(0, Math.max(CROP_F - w, cropState.x));
+  cropState.y = Math.min(0, Math.max(CROP_F - h, cropState.y));
+}
+function cropZoomChange(val) {
+  if (!cropState.img) return;
+  const newScale = cropState.minScale * parseFloat(val);
+  // um die Mitte zoomen
+  const cx = CROP_F/2, cy = CROP_F/2;
+  const ratio = newScale / cropState.scale;
+  cropState.x = cx - (cx - cropState.x) * ratio;
+  cropState.y = cy - (cy - cropState.y) * ratio;
+  cropState.scale = newScale;
+  clampCrop(); drawCrop();
+}
+function wireCropper() {
+  if (cropWired) return; cropWired = true;
+  const frame = document.getElementById('cropFrame');
+  let dragging=false, lastX=0, lastY=0;
+  const start = (x,y)=>{ dragging=true; lastX=x; lastY=y; frame.style.cursor='grabbing'; };
+  const move  = (x,y)=>{ if(!dragging)return; cropState.x += (x-lastX); cropState.y += (y-lastY); lastX=x; lastY=y; clampCrop(); drawCrop(); };
+  const end   = ()=>{ dragging=false; frame.style.cursor='grab'; };
+  frame.addEventListener('pointerdown', e=>{ frame.setPointerCapture(e.pointerId); start(e.clientX,e.clientY); });
+  frame.addEventListener('pointermove', e=>move(e.clientX,e.clientY));
+  frame.addEventListener('pointerup', end);
+  frame.addEventListener('pointercancel', end);
+}
+function applyCrop() {
+  if (!cropState.img) return;
+  const OUT = 900;
+  const out = document.createElement('canvas'); out.width=OUT; out.height=OUT;
+  const r = OUT/CROP_F, s = cropState.scale*r;
+  out.getContext('2d').drawImage(cropState.img, cropState.x*r, cropState.y*r, cropState.img.width*s, cropState.img.height*s);
+  const b64 = out.toDataURL('image/jpeg', 0.8);
+  const input = document.getElementById(cropState.targetInputId);
+  if (input) input._b64 = b64;
+  const preview = document.getElementById(cropState.previewId);
+  if (preview) { preview.src = b64; preview.classList.add('show'); }
+  closeCropper();
+  showToast('✓ Zugeschnitten');
+}
+function closeCropper() { document.getElementById('cropOverlay').classList.remove('open'); }
 
 // App-Install-Hinweis (dismissbar, nur wenn nicht schon als App installiert)
 function dismissAppHint() {
