@@ -454,13 +454,12 @@ select:focus,input:focus{border-color:var(--rot);}
   </div>
 
   <div class="bl-tabs">
-    <button class="bl-tab-pill active" onclick="blShowTab('liste',this)">Karte & Liste</button>
+    <button class="bl-tab-pill active" onclick="blShowTab('liste',this)">Liste</button>
     <button class="bl-tab-pill" onclick="blShowTab('form',this)">+ Eintrag hinzufügen</button>
   </div>
 
   <!-- LISTE -->
   <div id="bl-liste">
-    <div id="blMap" style="height:300px;border-radius:12px;overflow:hidden;margin-bottom:1.2rem;display:none;"></div>
     <div id="blLeaderboard" style="margin-bottom:1.1rem;"></div>
     <div class="cards-grid" id="blCardsGrid"></div>
     <div id="blNoResults" style="display:none;text-align:center;padding:2rem;color:var(--text-weich);">Noch keine Community-Einträge. Sei der Erste! 🌍</div>
@@ -578,10 +577,20 @@ select:focus,input:focus{border-color:var(--rot);}
 
 <!-- KARTE -->
 <div id="tab-karte" class="tab-content">
-  <div id="map"></div>
-  <div class="legende">
-    <span><span class="legende-dot" style="background:var(--rot)"></span> Bewertet</span>
-    <span><span class="legende-dot" style="background:#888"></span> Noch zu testen</span>
+  <div class="bl-tabs" style="margin-bottom:1rem;">
+    <button class="bl-tab-pill active" id="karte-wien-pill" onclick="karteShow('wien',this)">🗺️ Wien</button>
+    <button class="bl-tab-pill" onclick="karteShow('community',this)">🌍 Community</button>
+  </div>
+  <div id="karte-wien">
+    <div id="map"></div>
+    <div class="legende">
+      <span><span class="legende-dot" style="background:var(--rot)"></span> Bewertet</span>
+      <span><span class="legende-dot" style="background:#888"></span> Noch zu testen</span>
+    </div>
+  </div>
+  <div id="karte-community" style="display:none;">
+    <div id="blMap" style="height:70vh;min-height:360px;border-radius:12px;overflow:hidden;"></div>
+    <p style="font-size:0.8rem;color:var(--text-weich);margin-top:0.6rem;">Alle Community-Spots weltweit. Neue Einträge erscheinen automatisch.</p>
   </div>
 </div>
 
@@ -1494,7 +1503,7 @@ function showTab(name, btn) {
   if (name === 'forum')     setTimeout(renderForum, 50);
   if (name === 'statistik') setTimeout(renderStatistik, 50);
   if (name === 'benachrichtigungen') setTimeout(renderNotify, 50);
-  if (name === 'bundeslaender') setTimeout(() => { if (document.getElementById('bl-liste').style.display !== 'none') { renderBLCards(); renderBLMap(); } }, 80);
+  if (name === 'bundeslaender') setTimeout(() => { if (document.getElementById('bl-liste').style.display !== 'none') renderBLCards(); }, 80);
 }
 
 // ─── RENDER CARDS ─────────────────────────────────────
@@ -1952,6 +1961,16 @@ function parseCSVLine(line) {
 }
 
 // ─── MAP ──────────────────────────────────────────────
+// Umschalter im Karte-Reiter: Wien / Community
+function karteShow(which, btn) {
+  document.getElementById('karte-wien').style.display = which==='wien' ? 'block' : 'none';
+  document.getElementById('karte-community').style.display = which==='community' ? 'block' : 'none';
+  document.querySelectorAll('#tab-karte .bl-tab-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (which==='wien') setTimeout(initMap, 60);
+  if (which==='community') setTimeout(renderBLMap, 60);
+}
+
 function initMap() {
   if (mapInstance) { mapInstance.invalidateSize(); return; }
   mapInstance = L.map('map').setView([48.21, 16.37], 12);
@@ -2585,7 +2604,7 @@ function blShowTab(name, btn) {
   document.getElementById('bl-form').style.display  = name==='form'  ? 'block' : 'none';
   document.querySelectorAll('.bl-tab-pill').forEach(p => p.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  if (name === 'liste') { renderBLCards(); setTimeout(renderBLMap, 80); }
+  if (name === 'liste') renderBLCards();
 }
 
 // Länderflaggen für Ausland-Einträge (österreichische Bundesländer → AT-Flagge)
