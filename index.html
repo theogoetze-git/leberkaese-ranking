@@ -511,17 +511,17 @@ select:focus,input:focus{border-color:var(--rot);}
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Kruste (0–10)</label>
+          <label>Kruste (0–10) *</label>
           <input type="text" inputmode="decimal" id="bl-kruste" placeholder="z.B. 6.7">
         </div>
         <div class="form-group">
-          <label>Brot (0–10)</label>
+          <label>Brot (0–10) *</label>
           <input type="text" inputmode="decimal" id="bl-brot" placeholder="z.B. 6.7">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Fleisch (0–10)</label>
+          <label>Fleisch (0–10) *</label>
           <input type="text" inputmode="decimal" id="bl-fleisch" placeholder="z.B. 6.7">
         </div>
         <div class="form-group">
@@ -550,7 +550,7 @@ select:focus,input:focus{border-color:var(--rot);}
         <input type="text" id="bl-autor" placeholder="z.B. Sepp Täglich">
       </div>
       <div class="btn-row">
-        <button class="btn-primary" onclick="addBLEntry()">Eintrag speichern</button>
+        <button class="btn-primary" id="bl-save-btn" onclick="addBLEntry()">Eintrag speichern</button>
       </div>
     </div>
   </div>
@@ -2388,6 +2388,18 @@ async function saveBLToFirebase() {
   try { await window._fb.set(window._fb.ref(window._fb.db, 'blEntries'), obj); }
   catch(err) { console.error('Firebase blEntries:', err); }
 }
+// Gezielte, atomare Schreibvorgänge pro Eintrag (verhindert gegenseitiges Überschreiben)
+function fbSetBL(entry) {
+  if (!fbAvailable()) return;
+  try { window._fb.set(window._fb.ref(window._fb.db, 'blEntries/' + entry.id), entry); }
+  catch(err) { console.error('Firebase blEntries set:', err); }
+}
+function fbRemoveBL(id) {
+  if (!fbAvailable()) return;
+  try { window._fb.remove(window._fb.ref(window._fb.db, 'blEntries/' + id)); }
+  catch(err) { console.error('Firebase blEntries remove:', err); }
+}
+function saveBLLocal() { localStorage.setItem('lk_bl_entries', JSON.stringify(blEntries)); }
 
 // Firebase-BL-Eintrag normalisieren (null-Werte + leere Arrays wiederherstellen)
 function normalizeBLEntry(e) {
@@ -2578,12 +2590,15 @@ function toggleAuslandField() {
   document.getElementById('bl-ausland-wrap').style.display = val === 'Ausland' ? 'block' : 'none';
 }
 
+let blSaving = false;
 async function addBLEntry() {
+  if (blSaving) return;                    // Doppelklick-Schutz
   const blSelect = document.getElementById('bl-bundesland').value;
   const ausland  = document.getElementById('bl-ausland')?.value.trim();
   const bundesland = blSelect === 'Ausland' ? (ausland || 'Ausland') : blSelect;
   const name = document.getElementById('bl-name').value.trim();
   const autor = document.getElementById('bl-autor').value.trim();
+  const honorable = document.getElementById('bl-honorable')?.checked || false;
   if (!blSelect) { showToast('Bitte Bundesland wählen.'); return; }
   if (blSelect === 'Ausland' && !ausland) { showToast('Bitte Land eingeben.'); return; }
   if (!name) { showToast('Name ist erforderlich.'); return; }
@@ -2593,40 +2608,52 @@ async function addBLEntry() {
   const brot   = numFromId('bl-brot');
   const fleisch = numFromId('bl-fleisch');
   const hasR = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
-  const newId = Date.now();
+  if (!honorable && !hasR) { showToast('Bitte Kruste, Brot und Fleisch bewerten.'); return; }
 
-  const fileInput = document.getElementById('bl-foto');
-  let photoB64 = '';
-  if (fileInput.files[0]) {
-    photoB64 = await readFileAsB64(fileInput.files[0]);
+  blSaving = true;
+  const btn = document.getElementById('bl-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Wird gespeichert…'; }
+
+  try {
+    const newId = Date.now();
+    const fileInput = document.getElementById('bl-foto');
+    let photoB64 = '';
+    if (fileInput.files[0]) photoB64 = await readFileAsB64(fileInput.files[0]);
+
+    const entry = {
+      id: newId, name, bundesland,
+      ort: document.getElementById('bl-ort').value.trim(),
+      sorte: document.getElementById('bl-sorte').value.split(';').map(s=>s.trim()).filter(Boolean),
+      preis: numFromId('bl-preis') || null,
+      gesamt: hasR ? Math.round(((kruste+brot+fleisch)/3)*100)/100 : null,
+      kruste: hasR?kruste:null, brot: hasR?brot:null, fleisch: hasR?fleisch:null,
+      anmerkung: document.getElementById('bl-anmerkung').value.trim(),
+      datum: document.getElementById('bl-datum').value || '',
+      autor, honorable,
+      lat: null, lng: null, foto: '', photoB64, bezirk: bundesland
+    };
+    blEntries.push(entry);
+    blSynced.add(newId);
+    localStorage.setItem('lk_bl_synced', JSON.stringify([...blSynced]));
+    saveBLLocal();
+    fbSetBL(entry);                        // gezielt nur diesen Eintrag schreiben
+    notifyPush(NTFY_TOPIC, '🌍 Neuer Worldwide-Eintrag', `${autor} hat "${name}" (${blFlag(bundesland)} ${bundesland}) eingetragen`, ['round_pushpin']);
+
+    ['bl-name','bl-ort','bl-sorte','bl-preis','bl-kruste','bl-brot','bl-fleisch','bl-datum','bl-anmerkung','bl-autor'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('bl-bundesland').value='';
+    if (document.getElementById('bl-ausland')) document.getElementById('bl-ausland').value='';
+    document.getElementById('bl-ausland-wrap').style.display='none';
+    if (document.getElementById('bl-honorable')) document.getElementById('bl-honorable').checked = false;
+    document.getElementById('bl-foto').value='';
+    document.getElementById('bl-foto-preview').classList.remove('show');
+    showToast('✓ Eintrag gespeichert!');
+    blShowTab('liste', document.querySelector('.bl-tab-pill'));
+  } catch(err) {
+    console.error(err); showToast('Fehler beim Speichern – bitte nochmal.');
+  } finally {
+    blSaving = false;
+    if (btn) { btn.disabled = false; btn.textContent = 'Eintrag speichern'; }
   }
-
-  const honorable = document.getElementById('bl-honorable')?.checked || false;
-
-  blEntries.push({
-    id: newId, name, bundesland,
-    ort: document.getElementById('bl-ort').value.trim(),
-    sorte: document.getElementById('bl-sorte').value.split(';').map(s=>s.trim()).filter(Boolean),
-    preis: numFromId('bl-preis') || null,
-    gesamt: hasR ? Math.round(((kruste+brot+fleisch)/3)*100)/100 : null,
-    kruste: hasR?kruste:null, brot: hasR?brot:null, fleisch: hasR?fleisch:null,
-    anmerkung: document.getElementById('bl-anmerkung').value.trim(),
-    datum: document.getElementById('bl-datum').value || '',
-    autor: document.getElementById('bl-autor').value.trim(),
-    honorable,
-    lat: null, lng: null, foto: '', photoB64, bezirk: bundesland
-  });
-  saveBL();
-  notifyPush(NTFY_TOPIC, '🌍 Neuer Worldwide-Eintrag', `${autor} hat "${name}" (${blFlag(bundesland)} ${bundesland}) eingetragen`, ['round_pushpin']);
-  ['bl-name','bl-ort','bl-sorte','bl-preis','bl-kruste','bl-brot','bl-fleisch','bl-datum','bl-anmerkung','bl-autor'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('bl-bundesland').value='';
-  if (document.getElementById('bl-ausland')) document.getElementById('bl-ausland').value='';
-  document.getElementById('bl-ausland-wrap').style.display='none';
-  if (document.getElementById('bl-honorable')) document.getElementById('bl-honorable').checked = false;
-  document.getElementById('bl-foto').value='';
-  document.getElementById('bl-foto-preview').classList.remove('show');
-  showToast('✓ Eintrag gespeichert!');
-  blShowTab('liste', document.querySelector('.bl-tab-pill'));
 }
 
 function deleteBLEntry(id) {
@@ -2635,7 +2662,9 @@ function deleteBLEntry(id) {
   blSynced.delete(id);
   localStorage.setItem('lk_bl_synced', JSON.stringify([...blSynced]));
   blEntries = blEntries.filter(e => e.id !== id);
-  saveBL(); renderBLCards();
+  saveBLLocal();
+  fbRemoveBL(id);                          // gezielt nur diesen Eintrag entfernen
+  renderBLCards();
   showToast('Gelöscht.');
 }
 
@@ -2698,7 +2727,8 @@ async function saveBLEdit() {
   const foto = document.getElementById('be-foto');
   if (foto._b64) { e.photoB64 = foto._b64; e.foto = ''; localStorage.removeItem('lk_photo_bl_' + id); }
 
-  saveBL();
+  saveBLLocal();
+  fbSetBL(e);                              // gezielt nur diesen Eintrag aktualisieren
   closeBLEditModal();
   renderBLCards();
   showToast('✓ Gespeichert!');
