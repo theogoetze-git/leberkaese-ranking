@@ -487,7 +487,7 @@ select:focus,input:focus{border-color:var(--rot);}
           </select>
         </div>
         <div class="form-group">
-          <label>Ort</label>
+          <label>Ort *</label>
           <input type="text" id="bl-ort" placeholder="z.B. Dornbirn">
         </div>
       </div>
@@ -501,11 +501,11 @@ select:focus,input:focus{border-color:var(--rot);}
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Sorte(n)</label>
+          <label>Sorte(n) *</label>
           <input type="text" id="bl-sorte" placeholder="Pikant; Normal">
         </div>
         <div class="form-group">
-          <label>Preis (€)</label>
+          <label>Preis (€) *</label>
           <input type="text" inputmode="decimal" id="bl-preis" placeholder="3.50">
         </div>
       </div>
@@ -525,12 +525,12 @@ select:focus,input:focus{border-color:var(--rot);}
           <input type="text" inputmode="decimal" id="bl-fleisch" placeholder="z.B. 6.7">
         </div>
         <div class="form-group">
-          <label>Datum</label>
+          <label>Datum *</label>
           <input type="date" id="bl-datum">
         </div>
       </div>
       <div class="form-group">
-        <label>Anmerkung / Kommentar</label>
+        <label>Anmerkung / Kommentar *</label>
         <textarea id="bl-anmerkung" placeholder="Wie war's? Besonderheiten?"></textarea>
       </div>
       <div class="form-group" style="background:rgba(200,150,26,0.10);border-radius:8px;padding:0.6rem 0.7rem;">
@@ -538,10 +538,10 @@ select:focus,input:focus{border-color:var(--rot);}
           <input type="checkbox" id="bl-honorable" style="width:auto;margin:0;transform:scale(1.2);">
           <span>⭐ Als <strong>Honorable Mention</strong> eintragen</span>
         </label>
-        <p style="font-size:0.72rem;color:var(--text-weich);margin:0.4rem 0 0;line-height:1.4;">Für etwas, das <strong>kein klassischer Leberkäse</strong> ist, aber gut hierher passt — z.B. ein Gericht <em>mit</em> Leberkäse. Bekommt einen eigenen Sticker und zählt <strong>nicht</strong> ins Ranking (darf aber trotzdem bewertet werden).</p>
+        <p style="font-size:0.72rem;color:var(--text-weich);margin:0.4rem 0 0;line-height:1.4;">Für etwas, das <strong>kein klassischer Leberkäse</strong> ist, aber gut hierher passt — z.B. ein Gericht <em>mit</em> Leberkäse. Bekommt einen eigenen Sticker und zählt <strong>nicht</strong> ins Ranking.</p>
       </div>
       <div class="form-group">
-        <label>Foto</label>
+        <label>Foto *</label>
         <input type="file" id="bl-foto" accept="image/*" onchange="previewPhoto(this,'bl-foto-preview')">
         <img id="bl-foto-preview" class="photo-preview" alt="Vorschau">
         <button type="button" class="btn-sm" onclick="openCropper('bl-foto','bl-foto-preview')" style="margin-top:0.4rem;">✂️ Zuschneiden</button>
@@ -2708,16 +2708,30 @@ async function addBLEntry() {
   const name = document.getElementById('bl-name').value.trim();
   const autor = document.getElementById('bl-autor').value.trim();
   const honorable = document.getElementById('bl-honorable')?.checked || false;
-  if (!blSelect) { showToast('Bitte Bundesland wählen.'); return; }
-  if (blSelect === 'Ausland' && !ausland) { showToast('Bitte Land eingeben.'); return; }
-  if (!name) { showToast('Name ist erforderlich.'); return; }
-  if (!autor) { showToast('Bitte deinen Namen eingeben.'); return; }
-
+  const ort = document.getElementById('bl-ort').value.trim();
+  const sorteArr = document.getElementById('bl-sorte').value.split(';').map(s=>s.trim()).filter(Boolean);
+  const preisVal = numFromId('bl-preis');
+  const datumVal = document.getElementById('bl-datum').value;
+  const anmerkungVal = document.getElementById('bl-anmerkung').value.trim();
   const kruste = numFromId('bl-kruste');
   const brot   = numFromId('bl-brot');
   const fleisch = numFromId('bl-fleisch');
   const hasR = !isNaN(kruste) && !isNaN(brot) && !isNaN(fleisch);
-  if (!honorable && !hasR) { showToast('Bitte Kruste, Brot und Fleisch bewerten.'); return; }
+  const fileInput = document.getElementById('bl-foto');
+  const hasPhoto = !!(fileInput._b64 || fileInput.files[0]);
+
+  // Alle Felder Pflicht
+  if (!blSelect) { showToast('Bitte Bundesland wählen.'); return; }
+  if (blSelect === 'Ausland' && !ausland) { showToast('Bitte Land eingeben.'); return; }
+  if (!name) { showToast('Bitte Name der Fleischerei / des Lokals eingeben.'); return; }
+  if (!ort) { showToast('Bitte Ort eingeben.'); return; }
+  if (!sorteArr.length) { showToast('Bitte mindestens eine Sorte eingeben.'); return; }
+  if (isNaN(preisVal)) { showToast('Bitte Preis eingeben.'); return; }
+  if (!hasR) { showToast('Bitte Kruste, Brot und Fleisch bewerten.'); return; }
+  if (!datumVal) { showToast('Bitte Datum wählen.'); return; }
+  if (!anmerkungVal) { showToast('Bitte eine Anmerkung eingeben.'); return; }
+  if (!hasPhoto) { showToast('Bitte ein Foto hinzufügen.'); return; }
+  if (!autor) { showToast('Bitte deinen Namen eingeben.'); return; }
 
   blSaving = true;
   const btn = document.getElementById('bl-save-btn');
@@ -2725,19 +2739,18 @@ async function addBLEntry() {
 
   try {
     const newId = Date.now();
-    const fileInput = document.getElementById('bl-foto');
-    let photoB64 = '';
-    if (fileInput.files[0]) photoB64 = await readFileAsB64(fileInput.files[0]);
+    let photoB64 = fileInput._b64 || '';
+    if (!photoB64 && fileInput.files[0]) photoB64 = await readFileAsB64(fileInput.files[0]);
 
     const entry = {
       id: newId, name, bundesland,
-      ort: document.getElementById('bl-ort').value.trim(),
-      sorte: document.getElementById('bl-sorte').value.split(';').map(s=>s.trim()).filter(Boolean),
-      preis: numFromId('bl-preis') || null,
-      gesamt: hasR ? Math.round(((kruste+brot+fleisch)/3)*100)/100 : null,
-      kruste: hasR?kruste:null, brot: hasR?brot:null, fleisch: hasR?fleisch:null,
-      anmerkung: document.getElementById('bl-anmerkung').value.trim(),
-      datum: document.getElementById('bl-datum').value || '',
+      ort,
+      sorte: sorteArr,
+      preis: preisVal,
+      gesamt: Math.round(((kruste+brot+fleisch)/3)*100)/100,
+      kruste, brot, fleisch,
+      anmerkung: anmerkungVal,
+      datum: datumVal,
       autor, honorable,
       lat: null, lng: null, foto: '', photoB64, bezirk: bundesland
     };
@@ -2753,7 +2766,7 @@ async function addBLEntry() {
     if (document.getElementById('bl-ausland')) document.getElementById('bl-ausland').value='';
     document.getElementById('bl-ausland-wrap').style.display='none';
     if (document.getElementById('bl-honorable')) document.getElementById('bl-honorable').checked = false;
-    document.getElementById('bl-foto').value='';
+    const blFotoEl = document.getElementById('bl-foto'); blFotoEl.value=''; blFotoEl._b64 = null;
     document.getElementById('bl-foto-preview').classList.remove('show');
     showToast('✓ Eintrag gespeichert!');
     blShowTab('liste', document.querySelector('.bl-tab-pill'));
@@ -2798,7 +2811,10 @@ function openBLEditModal(id) {
   document.getElementById('be-autor').value = e.autor || '';
   document.getElementById('be-honorable').checked = !!e.honorable;
   const foto = document.getElementById('be-foto'); foto.value=''; foto._b64 = null;
-  document.getElementById('be-foto-preview').classList.remove('show');
+  const bePrev = document.getElementById('be-foto-preview');
+  const beSrc = getPhotoSrc(e) || localStorage.getItem('lk_photo_bl_' + id) || '';
+  if (beSrc) { bePrev.src = beSrc; bePrev.classList.add('show'); }
+  else { bePrev.classList.remove('show'); bePrev.src = ''; }
   document.getElementById('blEditModalOverlay').classList.add('open');
 }
 function closeBLEditModal() {
