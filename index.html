@@ -2129,8 +2129,9 @@ function findEntryById(id) {
       || (typeof blEntries !== 'undefined' ? blEntries.find(e => e.id === id) : null);
 }
 function saveEntryById(id) {
-  if (entries.find(e => e.id === id)) save();
-  else if (typeof blEntries !== 'undefined' && blEntries.find(e => e.id === id)) saveBL();
+  if (entries.find(e => e.id === id)) { save(); return; }
+  const e = (typeof blEntries !== 'undefined') ? blEntries.find(x => x.id === id) : null;
+  if (e) { saveBLLocal(); fbSetBL(e); }   // gezielt nur diesen Community-Eintrag schreiben
 }
 function getComments(id) {
   const e = findEntryById(id);
@@ -2507,7 +2508,7 @@ function markBLSynced(ids) {
 }
 
 function saveBL() {
-  localStorage.setItem('lk_bl_entries', JSON.stringify(blEntries));
+  saveBLLocal();
   saveBLToFirebase();
 }
 
@@ -2530,7 +2531,14 @@ function fbRemoveBL(id) {
   try { window._fb.remove(window._fb.ref(window._fb.db, 'blEntries/' + id)); }
   catch(err) { console.error('Firebase blEntries remove:', err); }
 }
-function saveBLLocal() { localStorage.setItem('lk_bl_entries', JSON.stringify(blEntries)); }
+function saveBLLocal() {
+  // Fotos (photoB64) NICHT lokal speichern – die liegen in Firebase. Sonst sprengt es das
+  // localStorage-Limit (v.a. iOS Safari ~5 MB) und das Speichern schlägt fehl.
+  try {
+    const lite = blEntries.map(e => { const { photoB64, ...rest } = e; return rest; });
+    localStorage.setItem('lk_bl_entries', JSON.stringify(lite));
+  } catch(err) { console.warn('lk_bl_entries lokal:', err); }
+}
 
 // Firebase-BL-Eintrag normalisieren (null-Werte + leere Arrays wiederherstellen)
 function normalizeBLEntry(e) {
@@ -2580,7 +2588,7 @@ window._setBLEntries = function(fbBL) {
   blEntries = merged;
   if (needsPush) saveBLToFirebase();
 
-  localStorage.setItem('lk_bl_entries', JSON.stringify(blEntries));
+  saveBLLocal();
   if (document.getElementById('bl-liste')?.style.display !== 'none') renderBLCards();
 };
 
@@ -2847,10 +2855,9 @@ async function addBLEntry() {
       lat: null, lng: null, foto: '', photoB64, bezirk: bundesland
     };
     blEntries.push(entry);
-    blSynced.add(newId);
-    localStorage.setItem('lk_bl_synced', JSON.stringify([...blSynced]));
-    saveBLLocal();
-    fbSetBL(entry);                        // gezielt nur diesen Eintrag schreiben
+    fbSetBL(entry);                        // Firebase zuerst – wichtigste Persistenz (klappt auch wenn localStorage voll)
+    try { blSynced.add(newId); localStorage.setItem('lk_bl_synced', JSON.stringify([...blSynced])); } catch(_){}
+    saveBLLocal();                         // schlank (ohne Foto) + fehlertolerant
     geocodeEntry(entry).then(ok => { if (ok && blMapInstance) drawBLMarkers(); }); // Pin für neuen Ort setzen
     notifyPush(NTFY_TOPIC, '🌍 Neuer Community-Eintrag', `${autor} hat "${name}" (${blFlag(bundesland)} ${bundesland}) eingetragen`, ['round_pushpin']);
 
