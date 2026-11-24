@@ -279,6 +279,51 @@ select:focus,input:focus{border-color:var(--rot);}
 .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--braun);color:#fff;padding:0.6rem 1.2rem;border-radius:20px;font-size:0.88rem;opacity:0;transition:opacity 0.3s;z-index:2000;pointer-events:none;}
 .toast.show{opacity:1;}
 
+/* NAV: Spendieren nur als Icon */
+.tab-btn-mini{padding:0.6rem 0.55rem;opacity:0.75;}
+
+/* STATISTIK: Preis-Leistung */
+.stat-chart-card{background:var(--karte);border-radius:var(--radius);box-shadow:0 2px 10px var(--schatten);padding:1.2rem;margin-top:1.5rem;}
+.stat-chart-card h3{font-size:1.05rem;color:var(--braun);margin-bottom:0.3rem;font-weight:normal;}
+
+/* COMMUNITY: Eintrag-CTA, Sortierung, FAB */
+.bl-cta{display:flex;align-items:center;gap:1rem;background:linear-gradient(135deg,var(--rot),#6a1010);color:#fff;border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:1.1rem;box-shadow:0 3px 12px rgba(139,26,26,0.25);}
+.bl-cta-text{flex:1;line-height:1.35;}
+.bl-cta-text strong{font-size:1.05rem;display:block;}
+.bl-cta-text span{font-size:0.82rem;opacity:0.85;}
+.bl-cta-btn{background:var(--gold-hell);color:#2C1810;border:none;border-radius:999px;padding:0.7rem 1.2rem;font-size:0.95rem;font-weight:bold;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.bl-cta-btn:hover{filter:brightness(1.05);}
+.bl-sortbar{display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem;flex-wrap:wrap;}
+.bl-sortbar label{font-size:0.8rem;color:var(--text-weich);}
+.bl-sortbar select{max-width:260px;}
+.bl-fab{position:fixed;right:1.1rem;bottom:1.3rem;z-index:800;width:58px;height:58px;border-radius:50%;border:none;background:var(--rot);color:#fff;font-size:1.9rem;line-height:1;box-shadow:0 4px 16px rgba(0,0,0,0.3);cursor:pointer;display:none;}
+.bl-fab.show{display:block;}
+@media(min-width:900px){.bl-fab.show{display:none;}}
+
+/* ADVENT */
+.advent-hero{background:linear-gradient(135deg,#1F4A2C,#123220);color:#F5EFE0;border-radius:var(--radius);padding:1.6rem;text-align:center;margin-bottom:1.3rem;}
+.advent-hero h2{font-size:1.5rem;font-weight:normal;margin-bottom:0.3rem;}
+.advent-hero p{opacity:0.8;font-size:0.88rem;font-style:italic;}
+.advent-today{display:grid;grid-template-columns:minmax(0,360px);justify-content:center;margin-bottom:1.6rem;}
+.advent-today-label{text-align:center;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-weich);margin-bottom:0.5rem;}
+.advent-today-label strong{color:var(--rot);font-size:0.95rem;letter-spacing:0.05em;}
+.advent-src{display:inline-block;font-size:0.7rem;border-radius:8px;padding:0.15rem 0.5rem;margin-left:0.3rem;background:rgba(31,74,44,0.12);color:#1F4A2C;text-transform:none;letter-spacing:0;}
+.advent-countdown{text-align:center;background:var(--karte);border-radius:var(--radius);padding:1.6rem 1rem;box-shadow:0 2px 10px var(--schatten);margin-bottom:1.6rem;}
+.advent-countdown .big{font-size:2.6rem;font-weight:bold;color:var(--rot);line-height:1;}
+.advent-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:0.6rem;max-width:560px;margin:0 auto;}
+.advent-door{aspect-ratio:1;border-radius:10px;border:none;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.15rem;font-size:1.3rem;font-weight:bold;transition:transform 0.15s;padding:0.2rem;overflow:hidden;}
+.advent-door small{font-size:0.58rem;font-weight:normal;line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.advent-door.open{background:var(--karte);color:var(--rot);box-shadow:0 2px 8px var(--schatten);}
+.advent-door.open:hover{transform:translateY(-2px);}
+.advent-door.today{background:var(--rot);color:#fff;box-shadow:0 0 0 3px var(--gold-hell);}
+.advent-door.selected{box-shadow:0 0 0 3px var(--gold);}
+.advent-door.today.selected{box-shadow:0 0 0 3px var(--gold-hell);}
+.advent-door.locked{background:repeating-linear-gradient(45deg,#1F4A2C,#1F4A2C 8px,#245433 8px,#245433 16px);color:rgba(245,239,224,0.75);cursor:default;}
+.advent-door.locked.preview{cursor:pointer;outline:2px dashed var(--gold-hell);outline-offset:-4px;}
+.advent-door.locked.day24{background:repeating-linear-gradient(45deg,#8B1A1A,#8B1A1A 8px,#9a2222 8px,#9a2222 16px);color:var(--gold-hell);}
+.advent-note{text-align:center;font-size:0.78rem;color:var(--text-weich);margin-top:1rem;font-style:italic;}
+@media(max-width:520px){.advent-grid{grid-template-columns:repeat(4,1fr);}}
+
 @media(max-width:520px){
   .form-row{grid-template-columns:1fr;}
   .header-top h1{font-size:1.2rem;}
@@ -306,6 +351,7 @@ select:focus,input:focus{border-color:var(--rot);}
       const data = snapshot.val();
       if (data) {
         const fbEntries = Object.values(data);
+        window._fbEntriesLoaded = true;
         if (typeof window._setEntries === 'function') window._setEntries(fbEntries);
       } else {
         // Firebase leer → lokale Einträge hochladen
@@ -318,11 +364,19 @@ select:focus,input:focus{border-color:var(--rot);}
       const data = snapshot.val();
       if (data) {
         const fbBL = Object.values(data);
+        window._fbBLLoaded = true;
         if (typeof window._setBLEntries === 'function') window._setBLEntries(fbBL);
       } else {
         // Firebase leer → lokale BL-Einträge hochladen
         if (typeof window._initFirebaseBL === 'function') window._initFirebaseBL();
       }
+    });
+
+    // Live-Listener: Adventkalender (eingefrorene Reihenfolge pro Jahr)
+    onValue(ref(db, 'advent'), snapshot => {
+      window._adventFB = snapshot.val() || {};
+      window._adventLoaded = true;
+      if (typeof window._onAdvent === 'function') window._onAdvent();
     });
 
     // Live-Listener: Forum-Posts in Echtzeit empfangen
@@ -355,16 +409,15 @@ select:focus,input:focus{border-color:var(--rot);}
   </div>
   <nav>
     <button class="tab-btn active" onclick="showTab('rangliste',this)">🏆 Rangliste</button>
+    <button class="tab-btn" onclick="showTab('advent',this)">🎄 Advent</button>
     <button class="tab-btn" onclick="showTab('bundeslaender',this)">🌍 Community</button>
-    <button class="tab-btn" onclick="showTab('luxus',this)">🥂 Luxus</button>
     <button class="tab-btn" onclick="showTab('forum',this)">💬 Forum</button>
     <button class="tab-btn" id="notifyTabBtn" onclick="showTab('benachrichtigungen',this)">🔔 Benachrichtigungen</button>
     <button class="tab-btn" onclick="showTab('karte',this)">🗺️ Karte</button>
-    <button class="tab-btn" onclick="showTab('chart',this)">💰 Preis-Leistung</button>
     <button class="tab-btn" onclick="showTab('statistik',this)">📊 Statistik</button>
     <button class="tab-btn" onclick="showTab('ressourcen',this)">📚 Ressourcen</button>
-    <button class="tab-btn" onclick="showTab('spendieren',this)">☕ Spendieren</button>
-    <button class="tab-btn" onclick="showTab('hinzufuegen',this)" id="addTabBtn">➕ Eintrag</button>
+    <button class="tab-btn" onclick="showTab('hinzufuegen',this)" id="addTabBtn">🔐 Admin</button>
+    <button class="tab-btn tab-btn-mini" onclick="showTab('spendieren',this)" title="Spendieren">💰</button>
     <button class="admin-btn" id="adminBtn" onclick="toggleAdmin()" title="Admin-Modus">🔒</button>
   </nav>
 </header>
@@ -417,16 +470,15 @@ select:focus,input:focus{border-color:var(--rot);}
   <div id="noResults" style="display:none;text-align:center;padding:2rem;color:var(--text-weich);">Keine Einträge gefunden.</div>
 </div>
 
-<!-- LUXUS -->
-<div id="tab-luxus" class="tab-content">
-  <div class="luxus-hero">
-    <h2>🥂 Der edle Ziegel</h2>
+<!-- ADVENT -->
+<div id="tab-advent" class="tab-content">
+  <div class="advent-hero">
+    <h2>🎄 Leberkäse-Adventkalender</h2>
+    <p>24 Ziegel bis Weihnachten, aus Wien-Rangliste und Community. Der Beste kommt am 24.</p>
   </div>
-  <div id="luxusAdminBar" style="display:none;margin-bottom:1rem;">
-    <button class="btn-primary" onclick="addLuxusEntry()">+ Luxus-Eintrag hinzufügen</button>
-  </div>
-  <div class="luxus-grid" id="luxusGrid"></div>
-  <div id="luxusWishlist"></div>
+  <div id="adventToday"></div>
+  <div class="advent-grid" id="adventGrid"></div>
+  <div id="adventNote" class="advent-note"></div>
 </div>
 
 <!-- FORUM -->
@@ -458,13 +510,29 @@ select:focus,input:focus{border-color:var(--rot);}
   </div>
 
   <div class="bl-tabs">
-    <button class="bl-tab-pill active" onclick="blShowTab('liste',this)">Liste</button>
-    <button class="bl-tab-pill" onclick="blShowTab('form',this)">+ Eintrag hinzufügen</button>
+    <button class="bl-tab-pill active" id="blPillListe" onclick="blShowTab('liste',this)">Liste</button>
+    <button class="bl-tab-pill" id="blPillForm" onclick="blShowTab('form',this)">+ Eintrag hinzufügen</button>
   </div>
 
   <!-- LISTE -->
   <div id="bl-liste">
+    <div class="bl-cta">
+      <div class="bl-cta-text"><strong>🧱 Leberkäse gegessen?</strong><span>Egal ob Wien, Bundesland oder Ausland: trag ihn ein.</span></div>
+      <button class="bl-cta-btn" onclick="blOpenForm()">+ Eintrag hinzufügen</button>
+    </div>
     <div id="blLeaderboard" style="margin-bottom:1.1rem;"></div>
+    <div class="bl-sortbar">
+      <label for="blSortSelect">Sortieren nach</label>
+      <select id="blSortSelect" onchange="renderBLCards()">
+        <option value="gesamt">Beste Bewertung</option>
+        <option value="neu">Zuletzt hinzugefügt</option>
+        <option value="alt">Zuerst hinzugefügt</option>
+        <option value="datum_neu">Besuchsdatum: neueste</option>
+        <option value="datum_alt">Besuchsdatum: älteste</option>
+        <option value="preis_asc">Preis ↑</option>
+        <option value="name">Name A–Z</option>
+      </select>
+    </div>
     <div class="cards-grid" id="blCardsGrid"></div>
     <div id="blNoResults" style="display:none;text-align:center;padding:2rem;color:var(--text-weich);">Noch keine Community-Einträge. Sei der Erste! 🌍</div>
   </div>
@@ -598,11 +666,6 @@ select:focus,input:focus{border-color:var(--rot);}
   </div>
 </div>
 
-<!-- CHART -->
-<div id="tab-chart" class="tab-content">
-  <p style="font-size:0.85rem;color:var(--text-weich);margin-bottom:1rem;">Jeder Punkt ist ein bewerteter Ort. Rechts oben = gut <em>und</em> günstig.</p>
-  <canvas id="chartCanvas"></canvas>
-</div>
 
 <!-- RESSOURCEN -->
 <div id="tab-ressourcen" class="tab-content">
@@ -670,6 +733,11 @@ select:focus,input:focus{border-color:var(--rot);}
 <!-- SPENDIEREN -->
 <div id="tab-statistik" class="tab-content">
   <div id="statistikContent"></div>
+  <div class="stat-chart-card" id="preisLeistungSection">
+    <h3>💰 Preis-Leistung</h3>
+    <p style="font-size:0.85rem;color:var(--text-weich);margin-bottom:1rem;">Jeder Punkt ist ein bewerteter Ort in Wien. Links oben = gut <em>und</em> günstig.</p>
+    <canvas id="chartCanvas"></canvas>
+  </div>
 </div>
 
 <div id="tab-spendieren" class="tab-content">
@@ -1027,6 +1095,7 @@ select:focus,input:focus{border-color:var(--rot);}
 </div>
 
 <div class="toast" id="toast"></div>
+<button class="bl-fab" id="blFab" onclick="blOpenForm()" title="Eintrag hinzufügen" aria-label="Community-Eintrag hinzufügen">+</button>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -1080,12 +1149,12 @@ const INITIAL_DATA = [
   {id:310,name:"Fleischerei Fritz",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   {id:311,name:"Ferdinand Wild",bezirk:"",sorte:[],preis:null,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:null,lng:null},
   // ── Luxus ──────────────────────────────────────────
-  {id:201,name:"Zotter Wien",bezirk:"1010",sorte:[],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"Kilopreis: 80 €",datum:"",foto:"",lat:48.208,lng:16.374,kategorie:"luxus"},
-  {id:202,name:"Atelier 7",bezirk:"1070",sorte:[],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.202,lng:16.356,kategorie:"luxus"},
-  {id:203,name:"Bành Wien Mraz",bezirk:"1020",sorte:["Fusion"],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.216,lng:16.385,kategorie:"luxus"},
-  {id:204,name:"Feinkosterei Neuer Markt",bezirk:"1010",sorte:[],preis:15.80,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.207,lng:16.370,kategorie:"luxus"},
-  {id:205,name:"Heunisch & Erben",bezirk:"1030",sorte:[],preis:11.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.199,lng:16.396,kategorie:"luxus"},
-  {id:206,name:"Wiener Schneckenmanufaktur Gugumuck",bezirk:"1100",sorte:["Schnecke"],preis:6.90,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"Super Ambiente, leckere Schnecken. Könnte würziger sein.",datum:"2026-07-18",foto:"wiener_schneckenmanufaktur_gugumuck.jpg",lat:48.170,lng:16.288,kategorie:"luxus"},
+  {id:201,name:"Zotter Wien",bezirk:"1010",sorte:[],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"Kilopreis: 80 €",datum:"",foto:"",lat:48.208,lng:16.374},
+  {id:202,name:"Atelier 7",bezirk:"1070",sorte:[],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.202,lng:16.356},
+  {id:203,name:"Bành Wien Mraz",bezirk:"1020",sorte:["Fusion"],preis:16.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.216,lng:16.385},
+  {id:204,name:"Feinkosterei Neuer Markt",bezirk:"1010",sorte:[],preis:15.80,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.207,lng:16.370},
+  {id:205,name:"Heunisch & Erben",bezirk:"1030",sorte:[],preis:11.00,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"",datum:"",foto:"",lat:48.199,lng:16.396},
+  {id:206,name:"Wiener Schneckenmanufaktur Gugumuck",bezirk:"1100",sorte:["Schnecke"],preis:6.90,gesamt:null,kruste:null,brot:null,fleisch:null,anmerkung:"Super Ambiente, leckere Schnecken. Könnte würziger sein.",datum:"2026-07-18",foto:"wiener_schneckenmanufaktur_gugumuck.jpg",lat:48.170,lng:16.288},
 ];
 
 // ─── STATE ────────────────────────────────────────────
@@ -1104,6 +1173,12 @@ let entries = JSON.parse(localStorage.getItem('lk_entries') || 'null') || INITIA
   if (changed) save();
 })();
 
+function stripLuxus(list) {
+  let changed = false;
+  list.forEach(e => { if (e && e.kategorie === 'luxus') { delete e.kategorie; changed = true; } });
+  return changed;
+}
+
 (function migrateNewEntries() {
   // Alle INITIAL_DATA-Einträge die noch nicht in entries sind, einfügen
   let changed = false;
@@ -1118,6 +1193,8 @@ let entries = JSON.parse(localStorage.getItem('lk_entries') || 'null') || INITIA
   entries = entries.filter(e => !(e.kategorie === 'luxus' && e.name === 'Neuer Luxus-Eintrag'));
   // Dubletten entfernen: leerer Gugumuck (id 103, richtig=209) & Thum "noch offen" (id 108, richtig=111)
   entries = entries.filter(e => ![103, 108].includes(e.id));
+  // Luxus-Kategorie aufgelöst (11/2026): Einträge wandern in die Wien-Rangliste
+  if (stripLuxus(entries)) changed = true;
   if (changed || entries.length !== before) save();
 })();
 let activeFilter = '';
@@ -1205,6 +1282,7 @@ function normalizeEntry(e) {
 // Von Firebase-Modul aufgerufen wenn Einträge sich ändern
 window._setEntries = function(fbEntries) {
   if (!fbEntries || fbEntries.length === 0) return;
+  setTimeout(() => window._onAdvent && window._onAdvent(), 0);
   // Lokale photoB64-Caches erhalten (nicht in Firebase gespeichert)
   const localB64 = {};
   entries.forEach(e => { if (e.photoB64) localB64[e.id] = e.photoB64; });
@@ -1224,8 +1302,11 @@ window._setEntries = function(fbEntries) {
     ...localOnly
   ];
 
+  // Luxus-Kategorie in Firebase einmalig auflösen
+  const luxusMigrated = stripLuxus(merged);
+
   // Lokale Einträge die Firebase fehlen → nachsynchronisieren
-  if (localOnly.length > 0) {
+  if (localOnly.length > 0 || luxusMigrated) {
     console.log('Firebase fehlen', localOnly.length, 'lokale Einträge – wird nachgepusht');
     entries = merged;
     saveEntriesToFirebase();
@@ -1491,8 +1572,6 @@ function updateAdminUI() {
   banner.classList.toggle('show', adminMode);
   if (addForm) { addForm.style.display = adminMode ? 'block' : 'none'; }
   if (lockedNotice) { lockedNotice.style.display = adminMode ? 'none' : 'block'; }
-  const lxBar = document.getElementById('luxusAdminBar');
-  if (lxBar) lxBar.style.display = adminMode ? 'block' : 'none';
 }
 
 // ─── TABS ─────────────────────────────────────────────
@@ -1502,10 +1581,11 @@ function showTab(name, btn) {
   document.getElementById('tab-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
   if (name === 'karte')   setTimeout(initMap, 50);
-  if (name === 'chart')  setTimeout(initChart, 50);
-  if (name === 'luxus')     setTimeout(renderLuxusCards, 50);
+  if (name === 'advent')    setTimeout(renderAdvent, 30);
   if (name === 'forum')     setTimeout(renderForum, 50);
-  if (name === 'statistik') setTimeout(renderStatistik, 50);
+  if (name === 'statistik') setTimeout(() => { renderStatistik(); try { initChart(); } catch(err) { console.warn('Chart:', err); } }, 50);
+  const fab = document.getElementById('blFab');
+  if (fab) fab.classList.toggle('show', name === 'bundeslaender');
   if (name === 'benachrichtigungen') setTimeout(renderNotify, 50);
   if (name === 'bundeslaender') setTimeout(() => { if (document.getElementById('bl-liste').style.display !== 'none') renderBLCards(); }, 80);
 }
@@ -2083,58 +2163,148 @@ async function sendKontakt() {
   }
 }
 
-// ─── LUXUS ────────────────────────────────────────────
-function renderLuxusCards() {
-  const grid     = document.getElementById('luxusGrid');
-  const wishlist = document.getElementById('luxusWishlist');
-  const bar      = document.getElementById('luxusAdminBar');
-  if (!grid) return;
-  if (bar) bar.style.display = adminMode ? 'block' : 'none';
-  grid.innerHTML = '';
-  if (wishlist) wishlist.innerHTML = '';
+// ─── ADVENTKALENDER ───────────────────────────────────
+// 24 bestbewertete Leberkäse aus Wien-Rangliste + Community (ohne Honorable Mentions).
+// Türchen 1 = Platz 24 … Türchen 24 = Platz 1. Reihenfolge wird am 1.12. in Firebase eingefroren.
+let adventSelected = null;
 
-  // Alle Luxus-Einträge nach Preis sortiert (kein Bewertungs-Ranking)
-  const all = entries.filter(e => e.kategorie === 'luxus')
-                     .sort((a,b) => (b.preis||0) - (a.preis||0));
-
-  all.forEach(e => {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.style.cssText = 'background:linear-gradient(145deg,#2A1E0A,#1A1208);color:#F0DDA0;';
-    const photoSrc = getPhotoSrc(e);
-    const visited = !!photoSrc;  // probiert, sobald ein Bild vorhanden ist
-
-    div.innerHTML = `
-      ${photoSrc
-        ? `<img class="card-img" src="${photoSrc}" alt="${e.name}" onerror="this.style.display='none'">`
-        : `<div class="card-img-placeholder" style="background:linear-gradient(135deg,#2A1E0A,#1C1208);">✦</div>`}
-      <div class="card-body">
-        <div class="card-header">
-          <div class="card-name" style="color:#F5E5B0;">${e.name}</div>
-          ${visited
-            ? `<span style="font-size:0.7rem;color:#C8A060;background:rgba(200,150,26,0.2);border-radius:8px;padding:0.2rem 0.5rem;flex-shrink:0;">✓ probiert</span>`
-            : `<span style="font-size:0.7rem;color:#7A6040;background:rgba(200,150,26,0.08);border-radius:8px;padding:0.2rem 0.5rem;flex-shrink:0;">offen</span>`}
-        </div>
-        <div class="card-meta" style="color:#8A6840;">${[e.bezirk, e.datum ? formatDatum(e.datum) : ''].filter(Boolean).join(' · ')}</div>
-        ${e.sorte.length ? `<div class="card-sorte">${e.sorte.map(s=>`<span class="sorte-tag" style="background:rgba(200,150,26,0.15);color:#C8A060;">${s}</span>`).join('')}</div>` : ''}
-        ${e.preis ? `<div class="card-preis" style="color:#8A6840;margin-top:0.2rem;">Preis: <strong style="color:var(--gold-hell);font-size:1.1rem;">${e.preis.toFixed(2)} €</strong></div>` : ''}
-        ${e.anmerkung ? `<div style="font-size:0.75rem;color:#8A6840;font-style:italic;margin-top:0.2rem;">${e.anmerkung}</div>` : ''}
-        ${adminMode ? `<div class="edit-overlay show"><button class="btn-edit-card" onclick="event.stopPropagation();openEditModal(${e.id})">✏️ Bearbeiten</button></div>` : ''}
-      </div>`;
-    div.onclick = () => openDetailModal(e);
-    grid.appendChild(div);
-  });
+function adventNow() {
+  const [y, m, d] = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Vienna' }).split('-').map(Number);
+  const year = m === 1 ? y - 1 : y;          // im Jänner noch der Kalender vom Dezember
+  let day = 0, daysUntil = 0;
+  if (m === 12) day = Math.min(d, 24);
+  else if (m === 1) day = 24;
+  else {
+    const now = Date.UTC(y, m - 1, d), start = Date.UTC(y, 11, 1);
+    daysUntil = Math.round((start - now) / 86400000);
+  }
+  return { year, day, daysUntil };
 }
 
-function addLuxusEntry() {
-  if (!adminMode) return;
-  const newId = Math.max(...entries.map(e=>e.id), 0) + 1;
-  entries.push({id:newId, name:'Neuer Luxus-Eintrag', bezirk:'', sorte:[], preis:null,
-    gesamt:null, kruste:null, brot:null, fleisch:null, anmerkung:'', datum:'', foto:'',
-    lat:null, lng:null, kategorie:'luxus'});
-  save();
-  renderLuxusCards();
-  openEditModal(newId);
+function adventScore(e) { return (e.kruste || 0) + (e.brot || 0) + (e.fleisch || 0); }
+
+function adventLivePool() {
+  const wien = entries.filter(e => typeof e.gesamt === 'number').map(e => ({ src: 'w', e }));
+  const comm = (typeof blEntries !== 'undefined' ? blEntries : [])
+    .filter(e => typeof e.gesamt === 'number' && !e.honorable).map(e => ({ src: 'c', e }));
+  return [...wien, ...comm]
+    .sort((a, b) => (b.e.gesamt - a.e.gesamt) || (adventScore(b.e) - adventScore(a.e)) || ((a.e.id || 0) - (b.e.id || 0)))
+    .slice(0, 24);
+}
+
+function adventSnapshot(e) {
+  const { photoB64, comments, ...rest } = e;
+  return JSON.parse(JSON.stringify(rest));
+}
+
+// Liefert die Liste Platz 1 … 24 (eingefroren, falls vorhanden)
+function adventList() {
+  const { year } = adventNow();
+  const frozen = window._adventFB && window._adventFB[year];
+  if (frozen && Array.isArray(frozen.list)) {
+    return frozen.list.map(it => {
+      const pool = it.src === 'w' ? entries : (typeof blEntries !== 'undefined' ? blEntries : []);
+      const live = pool.find(x => x.id === it.id);
+      return { src: it.src, e: live ? normalizeEntry(live) : normalizeEntry(it.snap || { name: '?', gesamt: null }) };
+    });
+  }
+  return adventLivePool();
+}
+
+function adventMaybeFreeze() {
+  const { year, day } = adventNow();
+  if (day < 1 || !fbAvailable()) return;
+  if (!window._adventLoaded || !window._fbEntriesLoaded || !window._fbBLLoaded) return;
+  if (window._adventFB && window._adventFB[year]) return;
+  if (window._adventFreezing) return;
+  const pool = adventLivePool();
+  if (!pool.length) return;
+  window._adventFreezing = true;
+  const data = {
+    frozenAt: new Date().toISOString(),
+    list: pool.map(it => ({ src: it.src, id: it.e.id, snap: adventSnapshot(it.e) })),
+  };
+  window._fb.set(window._fb.ref(window._fb.db, 'advent/' + year), data)
+    .catch(err => { console.error('Advent einfrieren:', err); window._adventFreezing = false; });
+}
+
+window._onAdvent = function() {
+  adventMaybeFreeze();
+  if (document.getElementById('tab-advent')?.classList.contains('active')) renderAdvent();
+};
+
+function adventSelect(d) { adventSelected = d; renderAdvent(); 
+  document.getElementById('adventToday')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+function renderAdvent() {
+  const todayEl = document.getElementById('adventToday');
+  const grid = document.getElementById('adventGrid');
+  const note = document.getElementById('adventNote');
+  if (!todayEl || !grid) return;
+  adventMaybeFreeze();
+
+  const { year, day, daysUntil } = adventNow();
+  const list = adventList();                       // Index 0 = Platz 1
+  const itemFor = d => list[24 - d] || null;       // Türchen d → Platz 25-d
+  const canOpen = d => d <= day || adminMode;
+
+  if (adventSelected === null || !canOpen(adventSelected)) adventSelected = day >= 1 ? day : null;
+
+  // Hervorgehobenes Türchen
+  todayEl.innerHTML = '';
+  if (adventSelected === null) {
+    todayEl.innerHTML = `<div class="advent-countdown">
+      <div class="big">${daysUntil}</div>
+      <div style="margin-top:0.4rem;">${daysUntil === 1 ? 'Tag' : 'Tage'} bis zum ersten Türchen</div>
+      <div style="font-size:0.8rem;color:var(--text-weich);margin-top:0.5rem;font-style:italic;">Ab 1. Dezember öffnet sich jeden Tag ein Leberkäse.</div>
+    </div>`;
+  } else {
+    const it = itemFor(adventSelected);
+    const platz = 25 - adventSelected;
+    const label = document.createElement('div');
+    label.className = 'advent-today-label';
+    const isToday = adventSelected === day;
+    label.innerHTML = `<strong>Türchen ${adventSelected}</strong>${isToday ? ' · heute' : ''}${adventSelected > day ? ' · Vorschau' : ''}<br>Platz ${platz} von 24
+      ${it ? `<span class="advent-src">${it.src === 'w' ? '🏆 Wien-Rangliste' : '🌍 Community'}</span>` : ''}`;
+    const wrap = document.createElement('div');
+    wrap.className = 'advent-today';
+    const inner = document.createElement('div');
+    inner.appendChild(label);
+    if (it) inner.appendChild(it.src === 'w' ? makeCard(it.e, platz) : makeBLCard(it.e, platz));
+    else inner.insertAdjacentHTML('beforeend', '<div class="advent-countdown">Hinter diesem Türchen ist leider noch nichts. 🧱</div>');
+    wrap.appendChild(inner);
+    todayEl.appendChild(wrap);
+  }
+
+  // 24 Türchen
+  grid.innerHTML = '';
+  for (let d = 1; d <= 24; d++) {
+    const b = document.createElement('button');
+    const open = d <= day;
+    const it = itemFor(d);
+    b.className = 'advent-door ' + (open ? 'open' : 'locked') + (d === day ? ' today' : '') +
+      (d === 24 ? ' day24' : '') + (d === adventSelected ? ' selected' : '') + (!open && adminMode ? ' preview' : '');
+    b.innerHTML = open
+      ? `${d}<small>${it ? it.e.name : ''}</small>`
+      : `${d}${d === 24 ? '<small>★</small>' : ''}`;
+    if (canOpen(d)) b.onclick = () => adventSelect(d);
+    else b.disabled = true;
+    b.title = open && it ? `Türchen ${d}: ${it.e.name}` : `Türchen ${d}`;
+    grid.appendChild(b);
+  }
+
+  const frozen = window._adventFB && window._adventFB[year];
+  note.textContent = frozen
+    ? 'Reihenfolge festgelegt am 1. Dezember. Neue Bewertungen ändern den Kalender nicht mehr.'
+    : (adminMode ? 'Admin-Vorschau: Alle Türchen anklickbar. Stand jetzt, Reihenfolge wird am 1. Dezember eingefroren.'
+                 : 'Die Reihenfolge wird am 1. Dezember nach dem aktuellen Ranking festgelegt.');
+}
+
+// ─── EHEMALS LUXUS ────────────────────────────────────
+// Luxus-Reiter wurde aufgelöst; die Einträge gehören jetzt zur Wien-Rangliste.
+// renderLuxusCards bleibt als Hook (wird bei jeder Datenänderung aufgerufen) und aktualisiert den Adventkalender.
+function renderLuxusCards() {
+  if (document.getElementById('tab-advent')?.classList.contains('active')) renderAdvent();
 }
 
 // ─── KOMMENTARE ───────────────────────────────────────
@@ -2577,6 +2747,7 @@ function normalizeBLEntry(e) {
 // Von Firebase-Modul aufgerufen wenn BL-Einträge sich ändern
 window._setBLEntries = function(fbBL) {
   if (!fbBL) return;
+  setTimeout(() => window._onAdvent && window._onAdvent(), 0);
   // Lokale Foto-Caches sichern, damit sie nicht von Firebase überschrieben werden
   const localB64 = {};
   blEntries.forEach(e => { if (e.photoB64) localB64[e.id] = e.photoB64; });
@@ -2623,6 +2794,13 @@ window._initFirebaseBL = function() { saveBLToFirebase(); };
   });
   if (changed) saveBL();
 })();
+
+function blOpenForm() {
+  const btn = document.querySelector('.tab-btn[onclick*="bundeslaender"]');
+  if (!document.getElementById('tab-bundeslaender').classList.contains('active')) showTab('bundeslaender', btn);
+  blShowTab('form', document.getElementById('blPillForm'));
+  document.getElementById('bl-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
 
 function blShowTab(name, btn) {
   document.getElementById('bl-liste').style.display = name==='liste' ? 'block' : 'none';
@@ -2765,15 +2943,30 @@ function renderBLCards() {
   noRes.style.display = 'none';
 
   // Normale Einträge (mit Ranking) und Honorable Mentions (ohne Ranking) trennen
-  const normal = blEntries.filter(e => !e.honorable).sort((a,b) => (b.gesamt||0)-(a.gesamt||0));
-  const honorable = blEntries.filter(e => e.honorable).sort((a,b) => (b.gesamt||0)-(a.gesamt||0));
+  const byScore = (a,b) => (b.gesamt||0)-(a.gesamt||0);
+  const normal = blEntries.filter(e => !e.honorable).sort(byScore);
+  const honorable = blEntries.filter(e => e.honorable).sort(byScore);
 
-  // Rang nur für bewertete normale Einträge
+  // Rang immer nach Bewertung (auch wenn anders sortiert wird)
+  const rankMap = {};
   let rank = 0;
-  normal.forEach(e => {
-    const r = e.gesamt !== null ? ++rank : null;
-    grid.appendChild(makeBLCard(e, r));
-  });
+  normal.forEach(e => { if (e.gesamt !== null && e.gesamt !== undefined) rankMap[e.id] = ++rank; });
+
+  const sortKey = document.getElementById('blSortSelect')?.value || 'gesamt';
+  const d = e => { const v = e.datum || ''; const m = v.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/); return m ? `${m[3].length===2?'20'+m[3]:m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : v; };
+  const sortFns = {
+    gesamt:    byScore,
+    neu:       (a,b) => (b.id||0) - (a.id||0),          // id = Zeitstempel beim Eintragen
+    alt:       (a,b) => (a.id||0) - (b.id||0),
+    datum_neu: (a,b) => (d(b)||'0').localeCompare(d(a)||'0'),
+    datum_alt: (a,b) => (d(a)||'9').localeCompare(d(b)||'9'),
+    preis_asc: (a,b) => (a.preis||99) - (b.preis||99),
+    name:      (a,b) => (a.name||'').localeCompare(b.name||'', 'de'),
+  };
+  const fn = sortFns[sortKey] || byScore;
+  normal.sort(fn); honorable.sort(fn);
+
+  normal.forEach(e => grid.appendChild(makeBLCard(e, rankMap[e.id] || null)));
 
   if (honorable.length > 0) {
     const div = document.createElement('div');
